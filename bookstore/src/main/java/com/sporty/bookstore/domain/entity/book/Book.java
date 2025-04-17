@@ -5,7 +5,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +16,6 @@ import java.math.BigDecimal;
  * Date: 4/16/25
  * Time: 9:12 PM
  */
-@Table(name = "books")
 @Entity
 @Getter
 @Setter

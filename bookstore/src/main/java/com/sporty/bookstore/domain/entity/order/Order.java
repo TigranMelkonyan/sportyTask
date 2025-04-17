@@ -47,6 +47,6 @@ public class Order extends AuditableBaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
 } 
