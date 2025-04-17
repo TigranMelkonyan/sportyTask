@@ -1,6 +1,5 @@
 package com.sporty.bookstore.domain.model.common.page;
 
-import com.sporty.bookstore.domain.model.common.validate.ValidatableModel;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +17,7 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PageableModel implements ValidatableModel {
+public class PageableModel {
 
     @Min(0)
     private int page;

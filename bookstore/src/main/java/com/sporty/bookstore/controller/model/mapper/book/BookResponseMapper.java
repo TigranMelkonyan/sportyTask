@@ -11,5 +11,6 @@ import org.mapstruct.Mapper;
  */
 @Mapper(componentModel = "spring")
 public interface BookResponseMapper {
+    
     BookResponse toResponse(Book model);
 }
