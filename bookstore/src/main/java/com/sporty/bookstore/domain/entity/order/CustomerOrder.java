@@ -1,36 +1,26 @@
 package com.sporty.bookstore.domain.entity.order;
 
 import com.sporty.bookstore.domain.entity.common.audit.AuditableBaseEntity;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Index;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-@Table(
-        name = "orders",
-        indexes = {
-                @Index(name = "idx_customer_id", columnList = "customerId")
-        }
-)
+@Table(name = "customer_orders")
 @Entity
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class Order extends AuditableBaseEntity {
+public class CustomerOrder extends AuditableBaseEntity {
 
-    @Column(nullable = false, columnDefinition = "uuid")
+    @Column(nullable = false, columnDefinition = "VARCHAR(36)")
     private UUID customerId;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -41,9 +31,6 @@ public class Order extends AuditableBaseEntity {
 
     @Column(nullable = false)
     private Boolean loyaltyPointsApplied = false;
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderItem> items = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

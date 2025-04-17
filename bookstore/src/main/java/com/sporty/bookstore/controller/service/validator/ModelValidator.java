@@ -1,4 +1,4 @@
-package com.sporty.bookstore.service.validator;
+package com.sporty.bookstore.controller.service.validator;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;

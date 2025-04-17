@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ import java.util.Objects;
  * Time: 12:52 PM
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageableModel implements ValidatableModel {

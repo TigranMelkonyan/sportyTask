@@ -1,4 +1,4 @@
-package com.sporty.bookstore.service.mapper.book;
+package com.sporty.bookstore.controller.service.mapper.book;
 
 import com.sporty.bookstore.domain.entity.book.Book;
 import com.sporty.bookstore.domain.model.book.CreateBookModel;

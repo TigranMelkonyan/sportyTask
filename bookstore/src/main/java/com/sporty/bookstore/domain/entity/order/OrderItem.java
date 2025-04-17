@@ -1,15 +1,20 @@
 package com.sporty.bookstore.domain.entity.order;
 
-import com.sporty.bookstore.domain.entity.book.Book;
 import com.sporty.bookstore.domain.entity.common.audit.AuditableBaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
-@Table(name = "order_items")
+@Table(name = "customer_order_items")
 @Entity
 @Getter
 @Setter
@@ -18,11 +23,10 @@ public class OrderItem extends AuditableBaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    private CustomerOrder order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_id", nullable = false)
-    private Book book;
+    @Column(nullable = false)
+    private UUID bookId;
 
     @Column(nullable = false)
     private Integer quantity;
