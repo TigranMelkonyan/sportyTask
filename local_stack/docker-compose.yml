@@ -1,0 +1,20 @@
+services:
+  common-db:
+    image: mysql:8.0
+    container_name: db
+    restart: always
+    networks:
+      - db_network
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_DATABASE=sporty_db
+    ports:
+      - 3309:3306
+    volumes:
+      - db_data:/var/lib/mysql
+
+networks:
+  db_network:
+
+volumes:
+  db_data:
