@@ -9,6 +9,7 @@ import lombok.Getter;
  */
 @Getter
 public enum BookType {
+    
     NEW_RELEASE(1.0, 0.0),
     REGULAR(1.0, 0.10),
     OLD_EDITION(0.80, 0.05);
