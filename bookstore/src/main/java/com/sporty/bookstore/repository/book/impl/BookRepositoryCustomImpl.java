@@ -8,14 +8,11 @@ import com.sporty.bookstore.repository.book.BookRepositoryCustom;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -30,47 +27,44 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
 
     @Override
     public PageModel<Book> search(final SearchProperties searchProperties) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        StringBuilder jpql = new StringBuilder("SELECT b FROM Book b WHERE 1=1");
+        StringBuilder countJpql = new StringBuilder("SELECT COUNT(b) FROM Book b WHERE 1=1");
 
-        CriteriaQuery<Book> cq = cb.createQuery(Book.class);
-        Root<Book> bookRoot = cq.from(Book.class);
-
-        List<Predicate> predicates = new ArrayList<>();
+        Map<String, Object> params = new HashMap<>();
 
         if (StringUtils.hasText(searchProperties.getSearchText())) {
-            Predicate bookTitlePredicate = cb.like(bookRoot.get("title"), "%"
-                    + searchProperties.getSearchText() + "%");
-            Predicate authorPredicate = cb.like(bookRoot.get("author"), "%"
-                    + searchProperties.getSearchText() + "%");
-            predicates.add(cb.or(bookTitlePredicate, authorPredicate));
+            jpql.append(" AND (LOWER(b.title) LIKE :searchText OR LOWER(b.author) LIKE :searchText)");
+            countJpql.append(" AND (LOWER(b.title) LIKE :searchText OR LOWER(b.author) LIKE :searchText)");
+            params.put("searchText", "%" + searchProperties.getSearchText().toLowerCase() + "%");
         }
 
         if (Objects.nonNull(searchProperties.getStatus())) {
-            predicates.add(cb.equal(bookRoot.get("status"), searchProperties.getStatus()));
+            jpql.append(" AND b.status = :status");
+            countJpql.append(" AND b.status = :status");
+            params.put("status", searchProperties.getStatus());
         }
 
-        cq.where(predicates.toArray(new Predicate[0]));
-
-        if (Objects.nonNull(searchProperties.getSort())) {
-            if ("desc".equalsIgnoreCase(searchProperties.getSort().getValue())) {
-                cq.orderBy(cb.desc(bookRoot.get("createdon")));
-            } else {
-                cq.orderBy(cb.asc(bookRoot.get("createdon")));
-            }
+        if (searchProperties.getSort() != null) {
+            String direction = "asc".equalsIgnoreCase(searchProperties.getSort().getValue()) ? "ASC" : "DESC";
+            jpql.append(" ORDER BY b.createdOn ").append(direction);
         }
 
-        TypedQuery<Book> query = entityManager.createQuery(cq);
+        TypedQuery<Book> query = entityManager.createQuery(jpql.toString(), Book.class);
+        TypedQuery<Long> countQuery = entityManager.createQuery(countJpql.toString(), Long.class);
+
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            query.setParameter(entry.getKey(), entry.getValue());
+            countQuery.setParameter(entry.getKey(), entry.getValue());
+        }
+
         PageableModel pageRequest = PageableModel.getPageRequestOrDefault(searchProperties.getPageable());
         query.setFirstResult(pageRequest.getPage() * pageRequest.getSize());
         query.setMaxResults(pageRequest.getSize());
 
         List<Book> books = query.getResultList();
-
-        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-        Root<Book> countRoot = countQuery.from(Book.class);
-        countQuery.select(cb.count(countRoot)).where(predicates.toArray(new Predicate[0]));
-        Long count = entityManager.createQuery(countQuery).getSingleResult();
+        Long count = countQuery.getSingleResult();
 
         return new PageModel<>(books, count);
     }
+
 }
