@@ -3,7 +3,6 @@ package com.sporty.bookstore.domain.model.common.search;
 import com.sporty.bookstore.domain.entity.common.ModelStatus;
 import com.sporty.bookstore.domain.model.common.page.PageableModel;
 import com.sporty.bookstore.domain.model.common.sort.SortOption;
-import com.sporty.bookstore.domain.model.common.validate.ValidatableModel;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,7 +16,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class SearchProperties implements ValidatableModel {
+public class SearchProperties {
 
     @Size(max = 100, message = "Search text cannot be longer than 100 characters")
     private String searchText;

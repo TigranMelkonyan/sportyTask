@@ -1,4 +1,4 @@
-package com.sporty.bookstore.controller.service.book;
+package com.sporty.bookstore.service.book;
 
 import com.sporty.bookstore.domain.entity.book.Book;
 import com.sporty.bookstore.domain.entity.common.ModelStatus;
@@ -10,8 +10,8 @@ import com.sporty.bookstore.domain.model.common.exception.RecordConflictExceptio
 import com.sporty.bookstore.domain.model.common.exception.RecordNotFoundException;
 import com.sporty.bookstore.domain.model.common.search.SearchProperties;
 import com.sporty.bookstore.repository.book.BookRepository;
-import com.sporty.bookstore.controller.service.mapper.book.BookMapper;
-import com.sporty.bookstore.controller.service.validator.ModelValidator;
+import com.sporty.bookstore.service.mapper.book.BookMapper;
+import com.sporty.bookstore.service.validator.ModelValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
