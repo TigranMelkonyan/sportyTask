@@ -1,13 +1,14 @@
 package com.sporty.bookstore.service.book;
 
 import com.sporty.bookstore.domain.entity.book.Book;
+import com.sporty.bookstore.domain.entity.book.BookType;
 import com.sporty.bookstore.domain.entity.common.ModelStatus;
 import com.sporty.bookstore.domain.model.book.CreateBookModel;
 import com.sporty.bookstore.domain.model.book.UpdateBookModel;
-import com.sporty.bookstore.domain.model.common.page.PageModel;
 import com.sporty.bookstore.domain.model.common.exception.ErrorCode;
 import com.sporty.bookstore.domain.model.common.exception.RecordConflictException;
 import com.sporty.bookstore.domain.model.common.exception.RecordNotFoundException;
+import com.sporty.bookstore.domain.model.common.page.PageModel;
 import com.sporty.bookstore.domain.model.common.search.SearchProperties;
 import com.sporty.bookstore.repository.book.BookRepository;
 import com.sporty.bookstore.service.mapper.book.BookMapper;
@@ -34,13 +35,14 @@ public class BookService {
     private final BookMapper mapper;
     private final ModelValidator validator;
     private final BookRepository repository;
+    private final BookTypeService bookTypeService;
 
     @Transactional(readOnly = true)
     public Book getById(final UUID id) {
         log.info("Retrieving book with id - {} ", id);
         Assert.notNull(id, "id must not be null");
-        Book result = repository.findById(id).orElseThrow(() -> new RecordNotFoundException(
-                String.format("Book with id - %s not exists", id)));
+        Book result = repository.findByIdAndStatus(id, ModelStatus.ACTIVE).orElseThrow(() ->
+                new RecordNotFoundException(String.format("Book with id - %s not exists", id)));
         log.info("Successfully retrieved book with id - {}, result - {}", id, result);
         return result;
     }
@@ -51,6 +53,8 @@ public class BookService {
         validator.validate(model);
         assertNotExistsWithAuthorAndTitle(model.getAuthor(), model.getTitle());
         Book entity = mapper.createModelToEntity(model);
+        BookType type = bookTypeService.getById(model.getBookTypeId());
+        entity.setType(type);
         Book result = repository.save(entity);
         log.info("Successfully created book with model - {}, result - {}", model, result);
         return result;
@@ -67,6 +71,8 @@ public class BookService {
             assertNotExistsWithAuthorAndTitle(model.getAuthor(), model.getTitle());
         }
         Book entity = mapper.updateModelToEntity(model, book);
+        BookType type = bookTypeService.getById(model.getBookTypeId());
+        entity.setType(type);
         Book result = repository.save(entity);
         log.info("Successfully updated book with id - {}", id);
         return result;
