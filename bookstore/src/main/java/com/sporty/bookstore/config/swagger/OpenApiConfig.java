@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * Time: 3:56 PM
  */
 @Configuration
-public class SwaggerConfig {
+public class OpenApiConfig {
 
     private static final String VERSION = "V1";
     private static final String TITLE = "Book Inventory";

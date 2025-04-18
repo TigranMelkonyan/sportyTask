@@ -59,7 +59,7 @@ public class BookController extends AbstractResponseController {
     public ResponseEntity<BookResponse> getById(@PathVariable final UUID id) {
         log.info("Received request to get book by id - {}", id);
         Book book = bookService.getById(id);
-        return ResponseEntity.ok(bookResponseMapper.toResponse(book));
+        return respondOK(bookResponseMapper.toResponse(book));
     }
 
     @PostMapping
@@ -71,10 +71,10 @@ public class BookController extends AbstractResponseController {
                     @ApiResponse(responseCode = "409", description = "Book with same author and title already exists")
             }
     )
-    public ResponseEntity<BookResponse> create(@RequestBody final CreateBookRequest model) {
-        log.info("Received request to create book with model - {}", model);
-        validator.validate(model);
-        CreateBookModel bookModel = bookRequestMapper.toCreateBookModel(model);
+    public ResponseEntity<BookResponse> create(@RequestBody final CreateBookRequest request) {
+        log.info("Received request to create book with request - {}", request);
+        validator.validate(request);
+        CreateBookModel bookModel = bookRequestMapper.toCreateBookModel(request);
         Book book = bookService.create(bookModel);
         return respondOK(bookResponseMapper.toResponse(book));
     }
@@ -90,10 +90,10 @@ public class BookController extends AbstractResponseController {
     )
     public ResponseEntity<BookResponse> update(
             @PathVariable final UUID id,
-            @RequestBody UpdateBookRequest model) {
-        log.info("Received request to update book with id - {} and model - {}", id, model);
-        validator.validate(model);
-        UpdateBookModel bookModel = bookRequestMapper.toUpdateBookModel(model);
+            @RequestBody UpdateBookRequest request) {
+        log.info("Received request to update book with id - {} and request - {}", id, request);
+        validator.validate(request);
+        UpdateBookModel bookModel = bookRequestMapper.toUpdateBookModel(request);
         Book book = bookService.update(id, bookModel);
         return respondOK(bookResponseMapper.toResponse(book));
     }

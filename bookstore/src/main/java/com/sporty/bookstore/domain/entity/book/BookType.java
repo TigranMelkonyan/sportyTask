@@ -1,30 +1,30 @@
 package com.sporty.bookstore.domain.entity.book;
 
+import com.sporty.bookstore.domain.entity.common.audit.AuditableBaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Created by Tigran Melkonyan
  * Date: 4/16/25
  * Time: 9:13 PM
  */
+@Entity
 @Getter
-public enum BookType {
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+public class BookType extends AuditableBaseEntity {
+
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    @Column(nullable = false)
+    private double priceMultiplier;
     
-    NEW_RELEASE(1.0, 0.0),
-    REGULAR(1.0, 0.10),
-    OLD_EDITION(0.80, 0.05);
+    @Column(nullable = false)
+    private double bundleDiscount;
 
-    private final double priceMultiplier;
-    private final double bundleDiscount;
-
-    BookType(double priceMultiplier, double bundleDiscount) {
-        this.priceMultiplier = priceMultiplier;
-        this.bundleDiscount = bundleDiscount;
-    }
-
-    public double calculateFinalPrice(double basePrice, int bundleSize) {
-        double priceAfterBase = basePrice * priceMultiplier;
-        double discount = priceAfterBase * (bundleSize >= 3 ? bundleDiscount : 0.0);
-        return priceAfterBase - discount;
-    }
 }

@@ -3,8 +3,7 @@ package com.sporty.bookstore.domain.entity.book;
 import com.sporty.bookstore.domain.entity.common.audit.AuditableBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.ManyToOne;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,8 +30,7 @@ public class Book extends AuditableBaseEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @ManyToOne(optional = false)
     private BookType type;
 
     @Column(nullable = false)

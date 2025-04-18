@@ -1,8 +1,10 @@
 package com.sporty.bookstore.repository.book;
 
 import com.sporty.bookstore.domain.entity.book.Book;
+import com.sporty.bookstore.domain.entity.common.ModelStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -12,5 +14,7 @@ import java.util.UUID;
  */
 public interface BookRepository extends JpaRepository<Book, UUID>, BookRepositoryCustom {
 
+    Optional<Book> findByIdAndStatus(UUID id, ModelStatus status);
+    
     boolean existsByAuthorAndTitle(String author, String title);
 }
