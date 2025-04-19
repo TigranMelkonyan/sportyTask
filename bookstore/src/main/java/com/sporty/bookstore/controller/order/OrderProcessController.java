@@ -13,13 +13,13 @@ import com.sporty.bookstore.controller.model.response.order.OrderCartItemPreview
 import com.sporty.bookstore.controller.model.response.order.OrderPlaceResponse;
 import com.sporty.bookstore.controller.model.response.order.OrderPlacedItemResponse;
 import com.sporty.bookstore.controller.model.response.order.OrderCartPreviewResponse;
-import com.sporty.bookstore.domain.model.order.OrderItemModel;
-import com.sporty.bookstore.domain.model.order.OrderPlaceItemModel;
-import com.sporty.bookstore.domain.model.order.OrderPlaceModel;
-import com.sporty.bookstore.domain.model.order.preview.OrderCartItemPreviewModel;
-import com.sporty.bookstore.domain.model.order.preview.OrderCartPreview;
+import com.sporty.bookstore.domain.model.order.item.OrderItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreview;
 import com.sporty.bookstore.service.order.OrderPlacedModel;
-import com.sporty.bookstore.service.order.OrderProcessService;
+import com.sporty.bookstore.service.order.OrderCartProcessService;
 import com.sporty.bookstore.service.validator.ModelValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -49,7 +49,7 @@ import java.util.UUID;
 public class OrderProcessController extends AbstractResponseController {
 
     private final ModelValidator validator;
-    private final OrderProcessService orderProcessService;
+    private final OrderCartProcessService orderProcessService;
     private final OrderItemRequestMapper orderPlaceRequestMapper;
     private final OrderCartPreviewResponseMapper orderPreviewResponseMapper;
     private final OrderPlacedItemResponseMapper orderPlacedItemResponseMapper;
@@ -67,7 +67,7 @@ public class OrderProcessController extends AbstractResponseController {
     public ResponseEntity<OrderCartPreviewResponse> getOrderPreview(@RequestBody final List<OrderCartItemPreviewRequest> request) {
         log.info("Received request to calculate order with request - {}", request);
         validator.validate(request);
-        List<OrderCartItemPreviewModel> list = new ArrayList<>();
+        List<OrderCartPreviewModel> list = new ArrayList<>();
         request.forEach(o -> list.add(orderItemPreviewRequestMapper.toOrderItemPreviewModel(o)));
         //replace with real user id
         OrderCartPreview orderItem = orderProcessService.calculateCartPreview(list, UUID.randomUUID());

@@ -1,5 +1,6 @@
-package com.sporty.bookstore.domain.model.order;
+package com.sporty.bookstore.domain.model.order.place;
 
+import com.sporty.bookstore.domain.model.order.item.OrderItemModel;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;

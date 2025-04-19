@@ -1,7 +1,7 @@
 package com.sporty.bookstore.controller.model.mapper.order;
 
 import com.sporty.bookstore.controller.model.response.order.OrderCartPreviewResponse;
-import com.sporty.bookstore.domain.model.order.preview.OrderCartPreview;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreview;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

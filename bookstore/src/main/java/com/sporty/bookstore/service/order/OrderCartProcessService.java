@@ -6,13 +6,13 @@ import com.sporty.bookstore.domain.entity.order.Order;
 import com.sporty.bookstore.domain.entity.order.OrderStatus;
 import com.sporty.bookstore.domain.model.common.exception.ErrorCode;
 import com.sporty.bookstore.domain.model.common.exception.RecordConflictException;
-import com.sporty.bookstore.domain.model.order.CreateOrderItemModel;
+import com.sporty.bookstore.domain.model.order.item.CreateOrderItemModel;
 import com.sporty.bookstore.domain.model.order.CreateOrderModel;
-import com.sporty.bookstore.domain.model.order.OrderPlaceItemModel;
-import com.sporty.bookstore.domain.model.order.OrderPlaceModel;
-import com.sporty.bookstore.domain.model.order.preview.OrderCartItemPreviewModel;
-import com.sporty.bookstore.domain.model.order.preview.OrderCartPreview;
-import com.sporty.bookstore.domain.model.order.preview.OrderPreviewItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreview;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewItemModel;
 import com.sporty.bookstore.service.book.BookService;
 import com.sporty.bookstore.service.mapper.order.OrderPlacedItemModelMapper;
 import com.sporty.bookstore.service.validator.ModelValidator;
@@ -36,7 +36,7 @@ import java.util.UUID;
 @Service
 @Log4j2
 @RequiredArgsConstructor
-public class OrderProcessService {
+public class OrderCartProcessService {
 
     private final int acceptableLoyaltyPoints = 10;
 
@@ -48,20 +48,20 @@ public class OrderProcessService {
 
     //TODO after calculation save to db
     @Transactional
-    public OrderCartPreview calculateCartPreview(final List<OrderCartItemPreviewModel> items, final UUID customerId) {
+    public OrderCartPreview calculateCartPreview(final List<OrderCartPreviewModel> items, final UUID customerId) {
         log.info("Calculating order preview for customer with id {}", customerId);
         validator.validate(items);
         Assert.notNull(customerId, "customerId cannot be null");
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalDiscount = BigDecimal.ZERO;
-        List<OrderPreviewItemModel> previewItems = new ArrayList<>();
+        List<OrderCartPreviewItemModel> previewItems = new ArrayList<>();
         //replace with user points
         int currentLoyaltyPoints = 15;
         boolean loyaltyApplied = false;
         boolean forFree = false;
-        OrderCartItemPreviewModel loyaltyItem = null;
+        OrderCartPreviewModel loyaltyItem = null;
         if (currentLoyaltyPoints >= acceptableLoyaltyPoints) {
-            for (OrderCartItemPreviewModel item : items) {
+            for (OrderCartPreviewModel item : items) {
                 Book book = bookService.getById(item.bookId());
                 if (isEligibleForLoyalty(book)) {
                     loyaltyItem = item;
@@ -69,7 +69,7 @@ public class OrderProcessService {
                 }
             }
         }
-        for (OrderCartItemPreviewModel item : items) {
+        for (OrderCartPreviewModel item : items) {
             Book book = bookService.getById(item.bookId());
             int bookQuantity = item.quantity();
             checkAvailableQuantity(book, bookQuantity);
@@ -104,7 +104,7 @@ public class OrderProcessService {
         OrderCartPreview preview = calculateCartPreview(placeModel
                 .items()
                 .stream()
-                .map(i -> new OrderCartItemPreviewModel(i.bookId(), i.quantity()))
+                .map(i -> new OrderCartPreviewModel(i.bookId(), i.quantity()))
                 .toList(), customerId
         );
         int totalCount = calculateTotalItemCount(preview.items());
@@ -118,7 +118,7 @@ public class OrderProcessService {
         createOrderModel.setCustomerId(customerId);
         createOrderModel.setLoyaltyPointsApplied(loyaltyApplied);
         Order order = orderService.create(createOrderModel);
-        for (OrderPreviewItemModel item : preview.items()) {
+        for (OrderCartPreviewItemModel item : preview.items()) {
             CreateOrderItemModel itemModel = new CreateOrderItemModel(
                     order.getId(),
                     item.bookId(),
@@ -146,27 +146,27 @@ public class OrderProcessService {
         orderService.save(order);
     }
 
-    private int calculateTotalItemCount(List<OrderPreviewItemModel> orderItems) {
+    private int calculateTotalItemCount(List<OrderCartPreviewItemModel> orderItems) {
         int totalQuantity = 0;
-        for (OrderPreviewItemModel item : orderItems) {
+        for (OrderCartPreviewItemModel item : orderItems) {
             totalQuantity += item.quantity();
         }
         return totalQuantity;
     }
 
-    private List<OrderPlaceItemModel> mapToOrderPlaceItems(final List<OrderPreviewItemModel> items) {
+    private List<OrderPlaceItemModel> mapToOrderPlaceItems(final List<OrderCartPreviewItemModel> items) {
         List<OrderPlaceItemModel> placeItems = new ArrayList<>();
-        for (OrderPreviewItemModel item : items) {
+        for (OrderCartPreviewItemModel item : items) {
             placeItems.add(orderPlacedModelMapper.toModelOrderPlacedModel(item));
         }
         return placeItems;
     }
 
     private void addPreviewItems(
-            final List<OrderPreviewItemModel> previewItems, final Book book,
+            final List<OrderCartPreviewItemModel> previewItems, final Book book,
             final int quantity, final BigDecimal discount, final BigDecimal prices,
             final BigDecimal itemsPriceAfterDiscount, boolean forFree) {
-        previewItems.add(new OrderPreviewItemModel(
+        previewItems.add(new OrderCartPreviewItemModel(
                 book.getId(),
                 book.getTitle(),
                 quantity,
@@ -198,8 +198,8 @@ public class OrderProcessService {
     }
 
     @Transactional
-    protected void updateBookStockQuantity(final List<OrderPreviewItemModel> items) {
-        for (OrderPreviewItemModel item : items) {
+    protected void updateBookStockQuantity(final List<OrderCartPreviewItemModel> items) {
+        for (OrderCartPreviewItemModel item : items) {
             Book book = bookService.getById(item.bookId());
             int stockQuantity = book.getStockQuantity() - item.quantity();
             checkAvailableQuantity(book, stockQuantity);

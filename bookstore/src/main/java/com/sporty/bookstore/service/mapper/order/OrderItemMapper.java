@@ -1,7 +1,7 @@
 package com.sporty.bookstore.service.mapper.order;
 
 import com.sporty.bookstore.domain.entity.order.OrderItem;
-import com.sporty.bookstore.domain.model.order.CreateOrderItemModel;
+import com.sporty.bookstore.domain.model.order.item.CreateOrderItemModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

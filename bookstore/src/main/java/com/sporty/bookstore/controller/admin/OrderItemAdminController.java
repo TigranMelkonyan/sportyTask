@@ -6,7 +6,7 @@ import com.sporty.bookstore.controller.model.response.common.PageResponse;
 import com.sporty.bookstore.controller.model.response.order.OrderItemResponse;
 import com.sporty.bookstore.domain.entity.order.OrderItem;
 import com.sporty.bookstore.domain.model.common.page.PageModel;
-import com.sporty.bookstore.domain.model.order.OrderItemsPageModel;
+import com.sporty.bookstore.domain.model.order.item.OrderItemsPageModel;
 import com.sporty.bookstore.service.order.OrderItemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

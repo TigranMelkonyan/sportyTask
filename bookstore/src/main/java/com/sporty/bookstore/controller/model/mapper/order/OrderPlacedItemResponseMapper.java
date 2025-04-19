@@ -1,7 +1,7 @@
 package com.sporty.bookstore.controller.model.mapper.order;
 
 import com.sporty.bookstore.controller.model.response.order.OrderPlacedItemResponse;
-import com.sporty.bookstore.domain.model.order.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
 import org.mapstruct.Mapper;
 
 /**

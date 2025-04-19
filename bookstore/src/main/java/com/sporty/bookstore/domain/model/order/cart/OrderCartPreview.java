@@ -1,4 +1,4 @@
-package com.sporty.bookstore.domain.model.order.preview;
+package com.sporty.bookstore.domain.model.order.cart;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,5 +12,5 @@ public record OrderCartPreview(
         BigDecimal totalPrice,
         BigDecimal totalDiscount,
         int loyaltyPoints,
-        List<OrderPreviewItemModel> items) {
+        List<OrderCartPreviewItemModel> items) {
 }

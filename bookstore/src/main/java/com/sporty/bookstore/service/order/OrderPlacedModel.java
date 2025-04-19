@@ -1,6 +1,6 @@
 package com.sporty.bookstore.service.order;
 
-import com.sporty.bookstore.domain.model.order.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
 
 import java.math.BigDecimal;
 import java.util.List;
