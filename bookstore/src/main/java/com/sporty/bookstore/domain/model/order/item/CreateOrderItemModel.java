@@ -1,4 +1,4 @@
-package com.sporty.bookstore.domain.model.order;
+package com.sporty.bookstore.domain.model.order.item;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

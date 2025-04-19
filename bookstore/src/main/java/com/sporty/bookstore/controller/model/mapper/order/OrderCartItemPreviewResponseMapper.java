@@ -1,7 +1,7 @@
 package com.sporty.bookstore.controller.model.mapper.order;
 
 import com.sporty.bookstore.controller.model.response.order.OrderCartItemPreviewResponse;
-import com.sporty.bookstore.domain.model.order.preview.OrderPreviewItemModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewItemModel;
 import org.mapstruct.Mapper;
 
 /**
@@ -11,5 +11,5 @@ import org.mapstruct.Mapper;
  */
 @Mapper(componentModel = "spring")
 public interface OrderCartItemPreviewResponseMapper {
-    OrderCartItemPreviewResponse toResponse(OrderPreviewItemModel preview);
+    OrderCartItemPreviewResponse toResponse(OrderCartPreviewItemModel preview);
 }

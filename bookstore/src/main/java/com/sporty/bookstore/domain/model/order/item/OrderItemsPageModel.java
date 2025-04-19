@@ -1,4 +1,4 @@
-package com.sporty.bookstore.domain.model.order;
+package com.sporty.bookstore.domain.model.order.item;
 
 import java.util.UUID;
 

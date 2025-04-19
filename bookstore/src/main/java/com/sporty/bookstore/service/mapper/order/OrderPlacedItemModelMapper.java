@@ -1,7 +1,7 @@
 package com.sporty.bookstore.service.mapper.order;
 
-import com.sporty.bookstore.domain.model.order.OrderPlaceItemModel;
-import com.sporty.bookstore.domain.model.order.preview.OrderPreviewItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewItemModel;
 import org.mapstruct.Mapper;
 
 /**
@@ -11,5 +11,5 @@ import org.mapstruct.Mapper;
  */
 @Mapper(componentModel = "spring")
 public interface OrderPlacedItemModelMapper {
-    OrderPlaceItemModel toModelOrderPlacedModel(OrderPreviewItemModel model);
+    OrderPlaceItemModel toModelOrderPlacedModel(OrderCartPreviewItemModel model);
 }

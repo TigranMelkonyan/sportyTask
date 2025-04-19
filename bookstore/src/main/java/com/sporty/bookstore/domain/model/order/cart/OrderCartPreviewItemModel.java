@@ -1,4 +1,4 @@
-package com.sporty.bookstore.domain.model.order;
+package com.sporty.bookstore.domain.model.order.cart;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import java.util.UUID;
  * Date: 4/18/25
  * Time: 4:24 PM
  */
-public record OrderPlaceItemModel(
+public record OrderCartPreviewItemModel(
         UUID bookId,
         String title,
         int quantity,

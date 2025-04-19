@@ -1,4 +1,4 @@
-package com.sporty.bookstore.domain.model.order;
+package com.sporty.bookstore.domain.model.order.item;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
