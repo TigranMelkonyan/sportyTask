@@ -2,12 +2,10 @@ package com.sporty.bookstore.domain.model.order;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,7 +14,7 @@ import java.util.UUID;
  * Time: 10:22 PM
  */
 @Data
-public class CreateCustomerOrderModel {
+public class CreateOrderModel {
 
     @NotNull(message = "Customer ID is required")
     public UUID customerId;
@@ -30,8 +28,5 @@ public class CreateCustomerOrderModel {
 
     @NotNull(message = "Loyalty points flag is required")
     public Boolean loyaltyPointsApplied;
-
-    @NotEmpty(message = "Order items must not be empty")
-    public List<CreateOrderItemModel> orderItems;
     
 }

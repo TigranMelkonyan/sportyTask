@@ -1,0 +1,218 @@
+package com.sporty.bookstore.service.order;
+
+import com.sporty.bookstore.domain.entity.book.Book;
+import com.sporty.bookstore.domain.entity.book.BookType;
+import com.sporty.bookstore.domain.entity.order.Order;
+import com.sporty.bookstore.domain.entity.order.OrderStatus;
+import com.sporty.bookstore.domain.model.common.exception.ErrorCode;
+import com.sporty.bookstore.domain.model.common.exception.RecordConflictException;
+import com.sporty.bookstore.domain.model.order.CreateOrderItemModel;
+import com.sporty.bookstore.domain.model.order.CreateOrderModel;
+import com.sporty.bookstore.domain.model.order.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.OrderPlaceModel;
+import com.sporty.bookstore.domain.model.order.preview.OrderCartItemPreviewModel;
+import com.sporty.bookstore.domain.model.order.preview.OrderCartPreview;
+import com.sporty.bookstore.domain.model.order.preview.OrderPreviewItemModel;
+import com.sporty.bookstore.service.book.BookService;
+import com.sporty.bookstore.service.mapper.order.OrderPlacedItemModelMapper;
+import com.sporty.bookstore.service.validator.ModelValidator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+/**
+ * Created by Tigran Melkonyan
+ * Date: 4/18/25
+ * Time: 4:18 PM
+ */
+@Service
+@Log4j2
+@RequiredArgsConstructor
+public class OrderProcessService {
+
+    private final int acceptableLoyaltyPoints = 10;
+
+    private final BookService bookService;
+    private final ModelValidator validator;
+    private final OrderService orderService;
+    private final OrderItemService orderItemService;
+    private final OrderPlacedItemModelMapper orderPlacedModelMapper;
+
+    //TODO after calculation save to db
+    @Transactional
+    public OrderCartPreview calculateCartPreview(final List<OrderCartItemPreviewModel> items, final UUID customerId) {
+        log.info("Calculating order preview for customer with id {}", customerId);
+        validator.validate(items);
+        Assert.notNull(customerId, "customerId cannot be null");
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        List<OrderPreviewItemModel> previewItems = new ArrayList<>();
+        //replace with user points
+        int currentLoyaltyPoints = 15;
+        boolean loyaltyApplied = false;
+        boolean forFree = false;
+        OrderCartItemPreviewModel loyaltyItem = null;
+        if (currentLoyaltyPoints >= acceptableLoyaltyPoints) {
+            for (OrderCartItemPreviewModel item : items) {
+                Book book = bookService.getById(item.bookId());
+                if (isEligibleForLoyalty(book)) {
+                    loyaltyItem = item;
+                    break;
+                }
+            }
+        }
+        for (OrderCartItemPreviewModel item : items) {
+            Book book = bookService.getById(item.bookId());
+            int bookQuantity = item.quantity();
+            checkAvailableQuantity(book, bookQuantity);
+            BigDecimal itemsPriceAfterDiscount;
+            if (Objects.nonNull(loyaltyItem) && !loyaltyApplied && loyaltyItem.bookId().equals(item.bookId())) {
+                loyaltyApplied = true;
+                forFree = true;
+            }
+            itemsPriceAfterDiscount = calculateBooksPriceWithDiscount(book, bookQuantity, loyaltyApplied);
+            BigDecimal prices = book.getBasePrice().multiply(BigDecimal.valueOf(item.quantity()));
+            BigDecimal discount = prices.subtract(itemsPriceAfterDiscount);
+            totalDiscount = totalDiscount.add(discount);
+            totalPrice = totalPrice.add(itemsPriceAfterDiscount);
+            addPreviewItems(previewItems, book, item.quantity(), discount, prices, itemsPriceAfterDiscount, forFree);
+            if (forFree) {
+                forFree = false;
+            }
+            
+        }
+        log.info("Successfully calculated order preview for customer with id {}", customerId);
+        return new OrderCartPreview(totalPrice, totalDiscount, currentLoyaltyPoints, previewItems);
+    }
+
+    @Transactional
+    public OrderPlacedModel placeOrder(final OrderPlaceModel placeModel, final UUID customerId) {
+        log.info("Place order for customer with id {}", customerId);
+        Assert.notNull(customerId, "customerId cannot be null");
+        validator.validate(placeModel);
+        //replace with user points
+        int currentLoyaltyPoints = 15;
+        boolean loyaltyApplied = false;
+        OrderCartPreview preview = calculateCartPreview(placeModel
+                .items()
+                .stream()
+                .map(i -> new OrderCartItemPreviewModel(i.bookId(), i.quantity()))
+                .toList(), customerId
+        );
+        int totalCount = calculateTotalItemCount(preview.items());
+        if (currentLoyaltyPoints >= acceptableLoyaltyPoints) {
+            loyaltyApplied = true;
+            currentLoyaltyPoints -= acceptableLoyaltyPoints;
+        }
+        CreateOrderModel createOrderModel = new CreateOrderModel();
+        createOrderModel.setTotalItems(totalCount);
+        createOrderModel.setTotalPrice(preview.totalPrice());
+        createOrderModel.setCustomerId(customerId);
+        createOrderModel.setLoyaltyPointsApplied(loyaltyApplied);
+        Order order = orderService.create(createOrderModel);
+        for (OrderPreviewItemModel item : preview.items()) {
+            CreateOrderItemModel itemModel = new CreateOrderItemModel(
+                    order.getId(),
+                    item.bookId(),
+                    item.quantity(),
+                    item.unitPrice(),
+                    item.totalPrice());
+            orderItemService.create(itemModel);
+        }
+
+        //TODO update user loyalty point
+//        userClientService.updateLoyaltyPoints(newPoints);
+
+        List<OrderPlaceItemModel> mappedItems = mapToOrderPlaceItems(preview.items());
+        OrderPlacedModel model = new OrderPlacedModel(
+                preview.totalPrice(), preview.totalDiscount(),
+                currentLoyaltyPoints, mappedItems);
+        updateBookStockQuantity(preview.items());
+        saveOrderState(order);
+        log.info("Successfully placed order for customer with id {}", customerId);
+        return model;
+    }
+
+    private void saveOrderState(final Order order) {
+        order.setOrderStatus(OrderStatus.COMPLETED);
+        orderService.save(order);
+    }
+
+    private int calculateTotalItemCount(List<OrderPreviewItemModel> orderItems) {
+        int totalQuantity = 0;
+        for (OrderPreviewItemModel item : orderItems) {
+            totalQuantity += item.quantity();
+        }
+        return totalQuantity;
+    }
+
+    private List<OrderPlaceItemModel> mapToOrderPlaceItems(final List<OrderPreviewItemModel> items) {
+        List<OrderPlaceItemModel> placeItems = new ArrayList<>();
+        for (OrderPreviewItemModel item : items) {
+            placeItems.add(orderPlacedModelMapper.toModelOrderPlacedModel(item));
+        }
+        return placeItems;
+    }
+
+    private void addPreviewItems(
+            final List<OrderPreviewItemModel> previewItems, final Book book,
+            final int quantity, final BigDecimal discount, final BigDecimal prices,
+            final BigDecimal itemsPriceAfterDiscount, boolean forFree) {
+        previewItems.add(new OrderPreviewItemModel(
+                book.getId(),
+                book.getTitle(),
+                quantity,
+                book.getBasePrice(),
+                discount,
+                prices,
+                itemsPriceAfterDiscount,
+                forFree));
+    }
+
+    private boolean isEligibleForLoyalty(final Book book) {
+        BookType type = book.getType();
+        return type.isEligibleForLoyalty();
+    }
+
+    private BigDecimal calculateBooksPriceWithDiscount(final Book book, int quantity, final boolean loyaltyApplied) {
+        if (quantity < 3) {
+            return calculateBooksPriceWithQuantity(book, quantity - 1);
+        }
+        quantity = loyaltyApplied ? quantity - 1 : quantity;
+        BigDecimal basePrice = book.getBasePrice()
+                .multiply(BigDecimal.valueOf(book.getType().getPriceMultiplier()))
+                .multiply(BigDecimal.valueOf(quantity));
+        return basePrice.multiply(BigDecimal.valueOf(book.getType().getBundleDiscount()));
+    }
+
+    private BigDecimal calculateBooksPriceWithQuantity(final Book book, final int quantity) {
+        return book.getBasePrice().multiply(BigDecimal.valueOf(quantity));
+    }
+
+    @Transactional
+    protected void updateBookStockQuantity(final List<OrderPreviewItemModel> items) {
+        for (OrderPreviewItemModel item : items) {
+            Book book = bookService.getById(item.bookId());
+            int stockQuantity = book.getStockQuantity() - item.quantity();
+            checkAvailableQuantity(book, stockQuantity);
+            book.setStockQuantity(stockQuantity);
+            bookService.save(book);
+        }
+    }
+
+    @Transactional
+    public void checkAvailableQuantity(final Book book, final int quantity) {
+        if (book.getStockQuantity() < quantity) {
+            throw new RecordConflictException(String.format("Not enough stock for book with id %s ", book.getId()), ErrorCode.RECORD_CONFLICT);
+        }
+    }
+
+}

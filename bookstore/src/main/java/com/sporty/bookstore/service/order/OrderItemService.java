@@ -1,6 +1,7 @@
 package com.sporty.bookstore.service.order;
 
 import com.sporty.bookstore.domain.entity.common.ModelStatus;
+import com.sporty.bookstore.domain.entity.order.Order;
 import com.sporty.bookstore.domain.entity.order.OrderItem;
 import com.sporty.bookstore.domain.model.common.exception.RecordNotFoundException;
 import com.sporty.bookstore.domain.model.common.page.PageModel;
@@ -32,6 +33,7 @@ public class OrderItemService {
 
     private final OrderItemMapper mapper;
     private final ModelValidator validator;
+    private final OrderService orderService;
     private final OrderItemRepository repository;
 
     @Transactional(readOnly = true)
@@ -49,7 +51,9 @@ public class OrderItemService {
     public OrderItem create(final CreateOrderItemModel model) {
         log.info("Creating order item with model - {} ", model);
         validator.validate(model);
+        Order order = orderService.getById(model.getOrderId());
         OrderItem entity = mapper.createModelToEntity(model);
+        entity.setOrder(order);
         OrderItem result = repository.save(entity);
         log.info("Successfully created order item with model - {}, result - {}", model, result);
         return result;

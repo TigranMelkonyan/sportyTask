@@ -14,7 +14,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SearchPropertiesRequestMapper {
 
-    default SearchProperties toSearchProperties(SearchPropertiesRequest request, String page, String size) {
+    default SearchProperties toSearchProperties(SearchPropertiesRequest request, int page, int size) {
         SearchProperties properties = mapRequestProperties(request);
         properties.setPageable(createPageableModel(page, size));
         return properties;
@@ -23,10 +23,10 @@ public interface SearchPropertiesRequestMapper {
     @Mapping(target = "pageable", ignore = true)
     SearchProperties mapRequestProperties(SearchPropertiesRequest request);
 
-    default PageableModel createPageableModel(String page, String size) {
+    default PageableModel createPageableModel(int page, int size) {
         PageableModel pageable = new PageableModel();
-        pageable.setPage(Integer.parseInt(page));
-        pageable.setSize(Integer.parseInt(size));
+        pageable.setPage(page);
+        pageable.setSize(size);
         return pageable;
     }
 }

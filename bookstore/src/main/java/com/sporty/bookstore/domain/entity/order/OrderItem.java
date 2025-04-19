@@ -23,7 +23,7 @@ public class OrderItem extends AuditableBaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    private CustomerOrder order;
+    private Order order;
 
     @Column(nullable = false)
     private UUID bookId;

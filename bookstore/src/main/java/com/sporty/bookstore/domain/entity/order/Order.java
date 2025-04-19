@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -18,8 +20,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class CustomerOrder extends AuditableBaseEntity {
+public class Order extends AuditableBaseEntity {
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, columnDefinition = "VARCHAR(36)")
     private UUID customerId;
 
