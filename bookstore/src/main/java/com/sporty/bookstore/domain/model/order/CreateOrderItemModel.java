@@ -3,7 +3,9 @@ package com.sporty.bookstore.domain.model.order;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -14,7 +16,12 @@ import java.util.UUID;
  * Time: 8:47 PM
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateOrderItemModel {
+    
+    @NotNull
+    public UUID orderId;
 
     @NotNull(message = "Book ID is required")
     public UUID bookId;

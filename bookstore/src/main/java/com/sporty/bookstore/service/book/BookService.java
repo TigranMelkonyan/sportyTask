@@ -97,6 +97,14 @@ public class BookService {
         return new PageModel<>(book.items(), book.totalCount());
     }
 
+    @Transactional
+    public Book save(final Book book) {
+        log.info("Saving book with model - {}", book);
+        Book result =  repository.save(book);
+        log.info("Successfully saved book with model - {}", book);
+        return result;
+    }
+
     private void assertNotExistsWithAuthorAndTitle(final String author, final String title) {
         if (repository.existsByAuthorAndTitle(author, title)) {
             throw new RecordConflictException(

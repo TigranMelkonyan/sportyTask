@@ -15,15 +15,26 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     private static final String VERSION = "V1";
-    private static final String TITLE = "Book Inventory";
-    private static final String API_DESCRIPTION = "Book Inventory API";
+    private static final String TITLE = "Book Store";
+    private static final String API_DESCRIPTION = "Book Store API";
 
     @Bean
     public GroupedOpenApi publicOpenAPI() {
         return GroupedOpenApi
                 .builder()
                 .group("public-apis")
-                .packagesToScan("com.sporty.bookstore")
+                .pathsToExclude("api/**")
+                .packagesToScan("com.sporty.bookstore.controller")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi adminOpenAPI() {
+        return GroupedOpenApi
+                .builder()
+                .pathsToExclude("api/admin/**")
+                .group("admin-public-apis")
+                .packagesToScan("com.sporty.bookstore.controller.admin")
                 .build();
     }
 

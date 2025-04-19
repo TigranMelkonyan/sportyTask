@@ -1,12 +1,12 @@
 package com.sporty.bookstore.service.order;
 
 import com.sporty.bookstore.domain.entity.common.ModelStatus;
-import com.sporty.bookstore.domain.entity.order.CustomerOrder;
+import com.sporty.bookstore.domain.entity.order.Order;
 import com.sporty.bookstore.domain.model.common.exception.RecordNotFoundException;
 import com.sporty.bookstore.domain.model.common.page.PageModel;
 import com.sporty.bookstore.domain.model.common.page.PageableModel;
-import com.sporty.bookstore.domain.model.order.CreateCustomerOrderModel;
-import com.sporty.bookstore.repository.order.CustomerOrderRepository;
+import com.sporty.bookstore.domain.model.order.CreateOrderModel;
+import com.sporty.bookstore.repository.order.OrderRepository;
 import com.sporty.bookstore.service.mapper.order.OrderMapper;
 import com.sporty.bookstore.service.validator.ModelValidator;
 import lombok.RequiredArgsConstructor;
@@ -28,17 +28,17 @@ import java.util.UUID;
 @Service
 @Log4j2
 @RequiredArgsConstructor
-public class CustomerOrderService {
+public class OrderService {
 
     private final OrderMapper mapper;
     private final ModelValidator validator;
-    private final CustomerOrderRepository repository;
+    private final OrderRepository repository;
 
     @Transactional(readOnly = true)
-    public CustomerOrder getById(final UUID id) {
+    public Order getById(final UUID id) {
         log.info("Retrieving customer order with id - {} ", id);
         Assert.notNull(id, "id must not be null");
-        CustomerOrder result = repository.findById(id)
+        Order result = repository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException(
                         String.format("Customer order with id - %s not exists", id)));
         log.info("Successfully retrieved customer order with id - {}, result - {}", id, result);
@@ -46,12 +46,21 @@ public class CustomerOrderService {
     }
 
     @Transactional
-    public CustomerOrder create(final CreateCustomerOrderModel model) {
+    public Order create(final CreateOrderModel model) {
         log.info("Creating customer order with model - {} ", model);
         validator.validate(model);
-        CustomerOrder entity = mapper.createModelToEntity(model);
-        CustomerOrder result = repository.save(entity);
+        Order entity = mapper.createModelToEntity(model);
+        Order result = repository.save(entity);
         log.info("Successfully created customer order with model - {}, result - {}", model, result);
+        return result;
+    }
+
+    @Transactional
+    public Order save(final Order order) {
+        log.info("Saving order with model - {} ", order);
+        validator.validate(order);
+        Order result = repository.save(order);
+        log.info("Successfully saved order with model - {}, result - {}", order, result);
         return result;
     }
 
@@ -59,18 +68,29 @@ public class CustomerOrderService {
     public void delete(final UUID id) {
         log.info("Deleting customer order with id - {} ", id);
         Assert.notNull(id, "id must not be null");
-        CustomerOrder order = getById(id);
+        Order order = getById(id);
         order.setStatus(ModelStatus.DELETED);
         repository.save(order);
         log.info("Successfully deleted customer order with id - {}", id);
     }
 
     @Transactional(readOnly = true)
-    public PageModel<CustomerOrder> getPages(final PageableModel model) {
+    public PageModel<Order> getCustomerOrderPages(final PageableModel model, final UUID customerId) {
         log.info("Searching customer orders with model - {}", model);
         validator.validate(model);
         Pageable pageable = PageRequest.of(model.getPage(), model.getSize());
-        Page<CustomerOrder> result = repository.findOrders(pageable);
+        Page<Order> result = repository.findOrdersByCustomer(pageable, customerId);
+        long totalCount = result.getTotalElements();
+        log.info("Successfully retrieved order items for order with id result - {}", result);
+        return new PageModel<>(result.getContent(), totalCount);
+    }
+
+    @Transactional(readOnly = true)
+    public PageModel<Order> getPages(final PageableModel model) {
+        log.info("Searching customer orders with model - {}", model);
+        validator.validate(model);
+        Pageable pageable = PageRequest.of(model.getPage(), model.getSize());
+        Page<Order> result = repository.findOrders(pageable);
         long totalCount = result.getTotalElements();
         log.info("Successfully retrieved order items for order with id result - {}", result);
         return new PageModel<>(result.getContent(), totalCount);

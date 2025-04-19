@@ -1,4 +1,4 @@
-package com.sporty.bookstore.controller.order;
+package com.sporty.bookstore.controller.admin;
 
 import com.sporty.bookstore.controller.AbstractResponseController;
 import com.sporty.bookstore.controller.model.mapper.order.OrderItemResponseMapper;
@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,11 +29,11 @@ import java.util.stream.Collectors;
  * Time: 10:22 PM
  */
 @RestController
-@RequestMapping("api/order-items")
+@RequestMapping("api/admin/order-items")
 @RequiredArgsConstructor
 @Log4j2
 @Tag(name = "Order Item Management", description = "APIs for managing order items")
-public class OrderItemController extends AbstractResponseController {
+public class OrderItemAdminController extends AbstractResponseController {
 
     private final OrderItemService orderItemService;
     private final OrderItemResponseMapper orderItemResponseMapper;
@@ -73,5 +74,19 @@ public class OrderItemController extends AbstractResponseController {
                 result.totalCount()
         );
         return respondOK(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Delete an order item",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Order item deleted successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input data")
+            }
+    )
+    public ResponseEntity<?> delete(@PathVariable final UUID id) {
+        log.info("Received request to delete order item with id - {}", id);
+        orderItemService.delete(id);
+        return respondEmpty();
     }
 } 

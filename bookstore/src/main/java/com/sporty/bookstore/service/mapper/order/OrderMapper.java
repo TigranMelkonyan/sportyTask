@@ -1,7 +1,7 @@
 package com.sporty.bookstore.service.mapper.order;
 
-import com.sporty.bookstore.domain.entity.order.CustomerOrder;
-import com.sporty.bookstore.domain.model.order.CreateCustomerOrderModel;
+import com.sporty.bookstore.domain.entity.order.Order;
+import com.sporty.bookstore.domain.model.order.CreateOrderModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,5 +18,6 @@ public interface OrderMapper {
     @Mapping(target = "updatedOn", ignore = true)
     @Mapping(target = "deletedOn", ignore = true)
     @Mapping(target = "status", ignore = true)
-    CustomerOrder createModelToEntity(CreateCustomerOrderModel model);
+    @Mapping(target = "orderStatus", ignore = true)
+    Order createModelToEntity(CreateOrderModel model);
 }
