@@ -10,6 +10,8 @@ import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -25,6 +27,7 @@ public class OrderItem extends AuditableBaseEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false)
     private UUID bookId;
 
