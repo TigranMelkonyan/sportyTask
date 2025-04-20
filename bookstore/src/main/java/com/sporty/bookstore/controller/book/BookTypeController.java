@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Log4j2
 @Tag(name = "Book Type Api", description = "APIs for getting book types")
 @PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
-public class BookTypeControllerController extends AbstractResponseController {
+public class BookTypeController extends AbstractResponseController {
 
     private final BookTypeService bookTypeService;
     private final BookTypeResponseMapper bookTypeResponseMapper;
