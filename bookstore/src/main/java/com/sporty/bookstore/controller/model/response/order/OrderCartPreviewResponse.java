@@ -15,7 +15,7 @@ public class OrderCartPreviewResponse {
 
     private BigDecimal totalPrice;
     private BigDecimal totalDiscount;
-    private int loyaltyPoints;
+    private int currentLoyaltyPoints;
     private List<OrderCartItemPreviewResponse> items;
 
 }

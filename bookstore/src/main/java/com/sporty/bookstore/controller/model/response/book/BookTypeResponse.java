@@ -12,6 +12,6 @@ public record BookTypeResponse(
         String name,
         double pricePercentage,
         double bundleDiscountPercentage,
-        boolean eligibleForLoyalty
+        boolean eligibleForDiscount
 ) {
 }

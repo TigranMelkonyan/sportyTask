@@ -13,6 +13,8 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface OrderCartPreviewResponseMapper {
 
+    @Mapping(source = "loyaltyPoints", target = "currentLoyaltyPoints")
     @Mapping(target = "items", ignore = true)
     OrderCartPreviewResponse toResponse(OrderCartPreview preview);
 }
+
