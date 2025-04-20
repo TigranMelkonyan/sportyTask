@@ -54,16 +54,7 @@ public class OrderService {
         log.info("Successfully created customer order with model - {}, result - {}", model, result);
         return result;
     }
-
-    @Transactional
-    public Order save(final Order order) {
-        log.info("Saving order with model - {} ", order);
-        validator.validate(order);
-        Order result = repository.save(order);
-        log.info("Successfully saved order with model - {}, result - {}", order, result);
-        return result;
-    }
-
+    
     @Transactional
     public void delete(final UUID id) {
         log.info("Deleting customer order with id - {} ", id);

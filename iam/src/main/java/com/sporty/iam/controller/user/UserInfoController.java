@@ -27,7 +27,7 @@ import java.util.UUID;
 @Log4j2
 @Tag(name = "User Api", description = "APIs for getting users info")
 @PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
-public class UserController extends AbstractResponseController {
+public class UserInfoController extends AbstractResponseController {
 
     private final UserService userService;
     private final UserResponseMapper userResponseMapper;

@@ -1,7 +1,10 @@
 package com.sporty.bookstore.config.swagger;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +15,12 @@ import org.springframework.context.annotation.Configuration;
  * Time: 3:56 PM
  */
 @Configuration
+@SecurityScheme(
+        type = SecuritySchemeType.HTTP,
+        name = "Bearer Authentication",
+        scheme = "bearer",
+        bearerFormat = "JWT"
+)
 public class OpenApiConfig {
 
     private static final String VERSION = "V1";
@@ -44,6 +53,8 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title(TITLE)
                         .version(VERSION)
-                        .description(API_DESCRIPTION));
+                        .description(API_DESCRIPTION))
+                .addSecurityItem(new SecurityRequirement()
+                        .addList("Bearer Authentication"));
     }
 }

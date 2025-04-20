@@ -3,6 +3,8 @@ package com.sporty.bookstore.controller;
 import com.sporty.bookstore.controller.model.response.common.ErrorResponse;
 import com.sporty.bookstore.domain.model.common.exception.ErrorCode;
 import com.sporty.bookstore.domain.model.common.exception.RecordConflictException;
+import feign.FeignException;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -50,6 +52,12 @@ public class AbstractController {
     @ResponseBody
     protected final ErrorResponse handle(final ConstraintViolationException e) {
         return new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT_EXCEPTION, e.getMessage());
+    }
+
+    @ExceptionHandler(FeignException.class)
+    public ErrorResponse handle(FeignException e, HttpServletResponse response) {
+        response.setStatus(e.status());
+        return new ErrorResponse(ErrorCode.FEIGN_EXCEPTION, e.getMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

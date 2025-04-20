@@ -15,6 +15,7 @@ import com.sporty.bookstore.service.mapper.book.BookMapper;
 import com.sporty.bookstore.service.validator.ModelValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -98,12 +99,22 @@ public class BookService {
     }
 
     @Transactional
-    public Book save(final Book book) {
+    public Book save(final Book book) throws RecordConflictException {
         log.info("Saving book with model - {}", book);
-        Book result =  repository.save(book);
-        log.info("Successfully saved book with model - {}", book);
+        Book result;
+        try {
+            result = repository.save(book);
+            log.info("Successfully saved book with model - {}", book);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Data integrity violation while saving book: {}", book, e);
+            throw new RecordConflictException(e.getMessage(), ErrorCode.RECORD_CONFLICT);
+        } catch (Exception e) {
+            log.error("Unexpected error while saving book: {}", book, e);
+            throw new RecordConflictException("Unexpected error: " + e.getMessage(), ErrorCode.RECORD_CONFLICT);
+        }
         return result;
     }
+
 
     private void assertNotExistsWithAuthorAndTitle(final String author, final String title) {
         if (repository.existsByAuthorAndTitle(author, title)) {

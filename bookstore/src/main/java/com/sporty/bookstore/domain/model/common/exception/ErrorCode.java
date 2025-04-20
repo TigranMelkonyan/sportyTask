@@ -6,6 +6,7 @@ package com.sporty.bookstore.domain.model.common.exception;
  * Time: 12:14 PM
  */
 public enum ErrorCode {
+    FEIGN_EXCEPTION,
     EXISTS_EXCEPTION,
     NOT_EXISTS_EXCEPTION,
     RECORD_CONFLICT,

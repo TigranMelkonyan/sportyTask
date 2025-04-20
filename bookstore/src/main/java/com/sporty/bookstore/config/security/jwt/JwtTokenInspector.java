@@ -1,4 +1,4 @@
-package com.sporty.iam.conf.security.jwt;
+package com.sporty.bookstore.config.security.jwt;
 
 import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +13,8 @@ import java.util.Map;
 
 /**
  * Created by Tigran Melkonyan
- * Date: 4/19/25
- * Time: 8:40 PM
+ * Date: 4/20/25
+ * Time: 12:26 PM
  */
 @Component
 public class JwtTokenInspector implements OpaqueTokenIntrospector {

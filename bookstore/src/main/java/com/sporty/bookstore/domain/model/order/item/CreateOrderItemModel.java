@@ -1,5 +1,6 @@
 package com.sporty.bookstore.domain.model.order.item;
 
+import com.sporty.bookstore.domain.entity.order.OrderStatus;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -37,4 +38,6 @@ public class CreateOrderItemModel {
     @DecimalMin(value = "0.00", message = "Total price must not be negative")
     public BigDecimal totalPrice;
         
+    @NotNull
+    public OrderStatus orderStatus;
 }
