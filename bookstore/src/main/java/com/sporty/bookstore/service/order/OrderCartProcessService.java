@@ -1,18 +1,19 @@
 package com.sporty.bookstore.service.order;
 
+import com.sporty.bookstore.controller.resource.IamServiceClient;
 import com.sporty.bookstore.domain.entity.book.Book;
 import com.sporty.bookstore.domain.entity.book.BookType;
 import com.sporty.bookstore.domain.entity.order.Order;
 import com.sporty.bookstore.domain.entity.order.OrderStatus;
 import com.sporty.bookstore.domain.model.common.exception.ErrorCode;
 import com.sporty.bookstore.domain.model.common.exception.RecordConflictException;
-import com.sporty.bookstore.domain.model.order.item.CreateOrderItemModel;
 import com.sporty.bookstore.domain.model.order.CreateOrderModel;
-import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
-import com.sporty.bookstore.domain.model.order.place.OrderPlaceModel;
-import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewModel;
 import com.sporty.bookstore.domain.model.order.cart.OrderCartPreview;
 import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewItemModel;
+import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewModel;
+import com.sporty.bookstore.domain.model.order.item.CreateOrderItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlaceModel;
 import com.sporty.bookstore.service.book.BookService;
 import com.sporty.bookstore.service.mapper.order.OrderPlacedItemModelMapper;
 import com.sporty.bookstore.service.validator.ModelValidator;
@@ -44,9 +45,9 @@ public class OrderCartProcessService {
     private final ModelValidator validator;
     private final OrderService orderService;
     private final OrderItemService orderItemService;
+    private final IamServiceClient iamServiceClient;
     private final OrderPlacedItemModelMapper orderPlacedModelMapper;
 
-    //TODO after calculation save to db
     @Transactional
     public OrderCartPreview calculateCartPreview(final List<OrderCartPreviewModel> items, final UUID customerId) {
         log.info("Calculating order preview for customer with id {}", customerId);
@@ -55,8 +56,7 @@ public class OrderCartProcessService {
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalDiscount = BigDecimal.ZERO;
         List<OrderCartPreviewItemModel> previewItems = new ArrayList<>();
-        //replace with user points
-        int currentLoyaltyPoints = 15;
+        int currentLoyaltyPoints = iamServiceClient.getUserLoyaltyPoints(customerId).getBody();
         boolean loyaltyApplied = false;
         boolean forFree = false;
         OrderCartPreviewModel loyaltyItem = null;
@@ -87,9 +87,10 @@ public class OrderCartProcessService {
             if (forFree) {
                 forFree = false;
             }
-            
+
         }
         log.info("Successfully calculated order preview for customer with id {}", customerId);
+        //cart preview data can be saved in db for further perches checkout
         return new OrderCartPreview(totalPrice, totalDiscount, currentLoyaltyPoints, previewItems);
     }
 
@@ -98,8 +99,7 @@ public class OrderCartProcessService {
         log.info("Place order for customer with id {}", customerId);
         Assert.notNull(customerId, "customerId cannot be null");
         validator.validate(placeModel);
-        //replace with user points
-        int currentLoyaltyPoints = 15;
+        int loyaltyPoints = iamServiceClient.getUserLoyaltyPoints(customerId).getBody();
         boolean loyaltyApplied = false;
         OrderCartPreview preview = calculateCartPreview(placeModel
                 .items()
@@ -107,43 +107,21 @@ public class OrderCartProcessService {
                 .map(i -> new OrderCartPreviewModel(i.bookId(), i.quantity()))
                 .toList(), customerId
         );
+        //some other pre-checks can be applied here for user balance etc...
         int totalCount = calculateTotalItemCount(preview.items());
-        if (currentLoyaltyPoints >= acceptableLoyaltyPoints) {
+        if (loyaltyPoints >= acceptableLoyaltyPoints) {
             loyaltyApplied = true;
-            currentLoyaltyPoints -= acceptableLoyaltyPoints;
+            loyaltyPoints -= acceptableLoyaltyPoints;
         }
-        CreateOrderModel createOrderModel = new CreateOrderModel();
-        createOrderModel.setTotalItems(totalCount);
-        createOrderModel.setTotalPrice(preview.totalPrice());
-        createOrderModel.setCustomerId(customerId);
-        createOrderModel.setLoyaltyPointsApplied(loyaltyApplied);
-        Order order = orderService.create(createOrderModel);
-        for (OrderCartPreviewItemModel item : preview.items()) {
-            CreateOrderItemModel itemModel = new CreateOrderItemModel(
-                    order.getId(),
-                    item.bookId(),
-                    item.quantity(),
-                    item.unitPrice(),
-                    item.totalPrice());
-            orderItemService.create(itemModel);
-        }
-
-        //TODO update user loyalty point
-//        userClientService.updateLoyaltyPoints(newPoints);
-
         List<OrderPlaceItemModel> mappedItems = mapToOrderPlaceItems(preview.items());
         OrderPlacedModel model = new OrderPlacedModel(
                 preview.totalPrice(), preview.totalDiscount(),
-                currentLoyaltyPoints, mappedItems);
+                loyaltyPoints, mappedItems);
         updateBookStockQuantity(preview.items());
-        saveOrderState(order);
+        createOrder(totalCount, preview.totalPrice(), customerId, loyaltyApplied, preview.items());
+        iamServiceClient.updateUserLoyaltyPoints(customerId, loyaltyPoints);
         log.info("Successfully placed order for customer with id {}", customerId);
         return model;
-    }
-
-    private void saveOrderState(final Order order) {
-        order.setOrderStatus(OrderStatus.COMPLETED);
-        orderService.save(order);
     }
 
     private int calculateTotalItemCount(List<OrderCartPreviewItemModel> orderItems) {
@@ -212,6 +190,29 @@ public class OrderCartProcessService {
     public void checkAvailableQuantity(final Book book, final int quantity) {
         if (book.getStockQuantity() < quantity) {
             throw new RecordConflictException(String.format("Not enough stock for book with id %s ", book.getId()), ErrorCode.RECORD_CONFLICT);
+        }
+    }
+
+    @Transactional
+    protected void createOrder(
+            int totalCount, final BigDecimal totalPrice,
+            final UUID customerId, final boolean loyaltyApplied,
+            final List<OrderCartPreviewItemModel> items) {
+        CreateOrderModel createOrderModel = new CreateOrderModel();
+        createOrderModel.setTotalItems(totalCount);
+        createOrderModel.setTotalPrice(totalPrice);
+        createOrderModel.setCustomerId(customerId);
+        createOrderModel.setLoyaltyPointsApplied(loyaltyApplied);
+        Order order = orderService.create(createOrderModel);
+        for (OrderCartPreviewItemModel item : items) {
+            CreateOrderItemModel itemModel = new CreateOrderItemModel(
+                    order.getId(),
+                    item.bookId(),
+                    item.quantity(),
+                    item.unitPrice(),
+                    item.totalPrice(),
+                    OrderStatus.COMPLETED);
+            orderItemService.create(itemModel);
         }
     }
 

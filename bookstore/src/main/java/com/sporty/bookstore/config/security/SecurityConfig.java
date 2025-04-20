@@ -1,6 +1,6 @@
-package com.sporty.iam.conf.security;
+package com.sporty.bookstore.config.security;
 
-import com.sporty.iam.conf.security.jwt.JwtTokenInspector;
+import com.sporty.bookstore.config.security.jwt.JwtTokenInspector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -10,6 +10,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Created by Tigran Melkonyan
+ * Date: 4/20/25
+ * Time: 12:25 PM
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -30,7 +35,6 @@ public class SecurityConfig {
         return http.authorizeHttpRequests(
                         authorizeHttpRequests -> authorizeHttpRequests
                                 .requestMatchers(
-                                        "/iam/oauth/token",
                                         "/v3/api-docs/**",
                                         "/swagger*/**").permitAll()
                                 .anyRequest()

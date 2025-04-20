@@ -1,5 +1,6 @@
 package com.sporty.bookstore.controller.order;
 
+import com.sporty.bookstore.config.security.audit.ApplicationAuditorAware;
 import com.sporty.bookstore.controller.AbstractResponseController;
 import com.sporty.bookstore.controller.model.mapper.order.OrderResponseMapper;
 import com.sporty.bookstore.controller.model.response.common.PageResponse;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,10 +34,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Log4j2
 @Tag(name = "Order Api", description = "APIs for getting orders")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
 public class OrderController extends AbstractResponseController {
 
     private final OrderService customerOrderService;
     private final OrderResponseMapper orderResponseMapper;
+    private final ApplicationAuditorAware applicationAuditorAware;
 
     @GetMapping("/{id}")
     @Operation(
@@ -64,7 +68,7 @@ public class OrderController extends AbstractResponseController {
             @PathVariable final int page,
             @PathVariable final int size) {
         log.info("Received request to search orders with page - {} and size - {}", page, size);
-        PageModel<Order> result = customerOrderService.getCustomerOrderPages(new PageableModel(page, size), null);
+        PageModel<Order> result = customerOrderService.getCustomerOrderPages(new PageableModel(page, size), applicationAuditorAware.getCurrentAccountId());
         PageResponse<OrderResponse> response = new PageResponse<>(result
                 .items()
                 .stream()
