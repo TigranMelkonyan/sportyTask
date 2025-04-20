@@ -1,4 +1,4 @@
-INSERT INTO sporty_db.user (
+INSERT INTO sporty_iam.user (
     id, created_on, updated_on, active, status, email, password, role, loyalty_points, username
 ) VALUES
       (
