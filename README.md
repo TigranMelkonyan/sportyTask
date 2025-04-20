@@ -66,7 +66,7 @@ mvn clean install
 ```
 
 ```shell
-sudo docker-compose -f local_stack/docker-compose.yml up --build
+docker-compose -f local_stack/docker-compose.yml up --build
 ```
 
 ```shell

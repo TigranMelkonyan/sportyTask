@@ -22,7 +22,7 @@ public class BookType extends AuditableBaseEntity {
     private String name;
     
     @Column(nullable = false)
-    private boolean eligibleForLoyalty;
+    private boolean eligibleForDiscount;
 
     @Column(nullable = false)
     private double priceMultiplier;

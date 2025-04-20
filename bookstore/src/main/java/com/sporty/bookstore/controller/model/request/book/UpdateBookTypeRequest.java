@@ -21,6 +21,6 @@ public record UpdateBookTypeRequest(
         @Schema(description = "Bundle discount as percentage (e.g., 95 = 5% discount)")
         double bundleDiscountPercentage,
         @NotNull(message = "required")
-        boolean eligibleForLoyalty
+        boolean eligibleForDiscount
 ) {
 }

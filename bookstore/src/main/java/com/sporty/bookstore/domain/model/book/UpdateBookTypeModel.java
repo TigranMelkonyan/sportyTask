@@ -13,5 +13,5 @@ public record UpdateBookTypeModel(
         @NotBlank(message = "required") String name,
         @Min(value = 0, message = "priceMultiplier must not be negative") double priceMultiplier,
         @Min(value = 0, message = "priceMultiplier must not be negative") double bundleDiscount,
-        @NotNull(message = "required") boolean eligibleForLoyalty) {
+        @NotNull(message = "required") boolean eligibleForDiscount) {
 }

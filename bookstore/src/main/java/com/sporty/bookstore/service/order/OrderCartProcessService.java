@@ -40,7 +40,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderCartProcessService {
 
-    private final int acceptableLoyaltyPoints = 10;
+    private final static int acceptableLoyaltyPoints = 10;
 
     private final BookService bookService;
     private final ModelValidator validator;
@@ -64,7 +64,7 @@ public class OrderCartProcessService {
         if (currentLoyaltyPoints >= acceptableLoyaltyPoints) {
             for (OrderCartPreviewModel item : items) {
                 Book book = bookService.getById(item.bookId());
-                if (isEligibleForLoyalty(book)) {
+                if (isEligibleForDiscount(book)) {
                     loyaltyItem = item;
                     break;
                 }
@@ -82,7 +82,7 @@ public class OrderCartProcessService {
             itemsPriceAfterDiscount = calculateBooksPriceWithDiscount(book, bookQuantity, loyaltyApplied);
             BigDecimal prices = book.getBasePrice().multiply(BigDecimal.valueOf(item.quantity()));
             BigDecimal discount = prices.subtract(itemsPriceAfterDiscount);
-            totalDiscount = totalDiscount.add(discount);
+            totalDiscount = itemsPriceAfterDiscount.equals(BigDecimal.ZERO) ? BigDecimal.ZERO : totalDiscount.add(discount);
             totalPrice = totalPrice.add(itemsPriceAfterDiscount);
             addPreviewItems(previewItems, book, item.quantity(), discount, prices, itemsPriceAfterDiscount, forFree);
             if (forFree) {
@@ -100,8 +100,8 @@ public class OrderCartProcessService {
         log.info("Place order for customer with id {}", customerId);
         Assert.notNull(customerId, "customerId cannot be null");
         validator.validate(placeModel);
-        int loyaltyPoints = Optional.ofNullable(iamServiceClient.getUserLoyaltyPoints(customerId).getBody()).orElse(0);
-        boolean loyaltyApplied = false;
+        int currentLoyaltyPoints = Optional.ofNullable(iamServiceClient.getUserLoyaltyPoints(customerId).getBody()).orElse(0);
+        boolean loyaltyApplied;
         OrderCartPreview preview = calculateCartPreview(placeModel
                 .items()
                 .stream()
@@ -110,17 +110,15 @@ public class OrderCartProcessService {
         );
         //some other pre-checks can be applied here for user balance etc...
         int totalCount = calculateTotalItemCount(preview.items());
-        if (loyaltyPoints >= acceptableLoyaltyPoints) {
-            loyaltyApplied = true;
-            loyaltyPoints -= acceptableLoyaltyPoints;
-        }
+        loyaltyApplied = currentLoyaltyPoints >= acceptableLoyaltyPoints;
+        int updatedPoints = updateCustomerLoyaltyPointsByPurchasedBooks(currentLoyaltyPoints, loyaltyApplied, totalCount);
         List<OrderPlaceItemModel> mappedItems = mapToOrderPlaceItems(preview.items());
         OrderPlacedModel model = new OrderPlacedModel(
                 preview.totalPrice(), preview.totalDiscount(),
-                loyaltyPoints, mappedItems);
+                updatedPoints, mappedItems);
         updateBookStockQuantity(preview.items());
+        iamServiceClient.updateUserLoyaltyPoints(customerId, updatedPoints);
         createOrder(totalCount, preview.totalPrice(), customerId, loyaltyApplied, preview.items());
-        updateCustomerLoyaltyPointsByPurchasedBooks(customerId, loyaltyPoints, loyaltyApplied, totalCount);
         log.info("Successfully placed order for customer with id {}", customerId);
         return model;
     }
@@ -167,12 +165,15 @@ public class OrderCartProcessService {
     }
 
     @Transactional
-    protected void updateCustomerLoyaltyPointsByPurchasedBooks(
-            final UUID customerId, final int currentPoints,
-            final boolean loyaltyApplied, int purchasedCount) {
+    protected int updateCustomerLoyaltyPointsByPurchasedBooks(
+            final int currentPoints,
+            final boolean loyaltyApplied,
+            int purchasedCount) {
         int earnedPoints = loyaltyApplied ? purchasedCount - 1 : purchasedCount;
-        int updatedPoints = currentPoints + earnedPoints;
-        iamServiceClient.updateUserLoyaltyPoints(customerId, updatedPoints);
+        int pointsAfterApplied = loyaltyApplied ? 0 : currentPoints;
+        int updatedPoints = pointsAfterApplied + earnedPoints;
+        updatedPoints = Math.max(updatedPoints, 0);
+        return updatedPoints;
     }
 
 
@@ -207,14 +208,14 @@ public class OrderCartProcessService {
                 forFree));
     }
 
-    private boolean isEligibleForLoyalty(final Book book) {
+    private boolean isEligibleForDiscount(final Book book) {
         BookType type = book.getType();
-        return type.isEligibleForLoyalty();
+        return type.isEligibleForDiscount();
     }
 
     private BigDecimal calculateBooksPriceWithDiscount(final Book book, int quantity, final boolean loyaltyApplied) {
         if (quantity < 3) {
-            return calculateBooksPriceWithQuantity(book, quantity - 1);
+            return calculateBooksPriceWithQuantity(book, quantity, loyaltyApplied);
         }
         quantity = loyaltyApplied ? quantity - 1 : quantity;
         BigDecimal basePrice = book.getBasePrice()
@@ -223,7 +224,8 @@ public class OrderCartProcessService {
         return basePrice.multiply(BigDecimal.valueOf(book.getType().getBundleDiscount()));
     }
 
-    private BigDecimal calculateBooksPriceWithQuantity(final Book book, final int quantity) {
+    private BigDecimal calculateBooksPriceWithQuantity(final Book book, int quantity, final boolean loyaltyApplied) {
+        quantity = loyaltyApplied ? quantity - 1 : quantity;
         return book.getBasePrice().multiply(BigDecimal.valueOf(quantity));
     }
 

@@ -24,7 +24,7 @@ public interface BookResponseMapper {
                 type.getName(),
                 type.getPriceMultiplier() * 100,
                 type.getBundleDiscount() * 100,
-                type.isEligibleForLoyalty()
+                type.isEligibleForDiscount()
         );
     }
 }
