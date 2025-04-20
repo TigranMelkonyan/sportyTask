@@ -3,6 +3,7 @@ package com.sporty.bookstore.controller.model.mapper.order;
 import com.sporty.bookstore.controller.model.response.order.OrderItemResponse;
 import com.sporty.bookstore.domain.entity.order.OrderItem;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 /**
  * Created by Tigran Melkonyan
@@ -11,5 +12,7 @@ import org.mapstruct.Mapper;
  */
 @Mapper(componentModel = "spring")
 public interface OrderItemResponseMapper {
+
+    @Mapping(source = "order.id", target = "orderId")
     OrderItemResponse toResponse(OrderItem model);
 }
