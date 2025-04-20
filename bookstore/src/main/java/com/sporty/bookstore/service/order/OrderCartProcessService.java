@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -56,7 +57,7 @@ public class OrderCartProcessService {
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalDiscount = BigDecimal.ZERO;
         List<OrderCartPreviewItemModel> previewItems = new ArrayList<>();
-        int currentLoyaltyPoints = iamServiceClient.getUserLoyaltyPoints(customerId).getBody();
+        int currentLoyaltyPoints = Optional.ofNullable(iamServiceClient.getUserLoyaltyPoints(customerId).getBody()).orElse(0);
         boolean loyaltyApplied = false;
         boolean forFree = false;
         OrderCartPreviewModel loyaltyItem = null;
@@ -99,7 +100,7 @@ public class OrderCartProcessService {
         log.info("Place order for customer with id {}", customerId);
         Assert.notNull(customerId, "customerId cannot be null");
         validator.validate(placeModel);
-        int loyaltyPoints = iamServiceClient.getUserLoyaltyPoints(customerId).getBody();
+        int loyaltyPoints = Optional.ofNullable(iamServiceClient.getUserLoyaltyPoints(customerId).getBody()).orElse(0);
         boolean loyaltyApplied = false;
         OrderCartPreview preview = calculateCartPreview(placeModel
                 .items()
@@ -119,10 +120,61 @@ public class OrderCartProcessService {
                 loyaltyPoints, mappedItems);
         updateBookStockQuantity(preview.items());
         createOrder(totalCount, preview.totalPrice(), customerId, loyaltyApplied, preview.items());
-        iamServiceClient.updateUserLoyaltyPoints(customerId, loyaltyPoints);
+        updateCustomerLoyaltyPointsByPurchasedBooks(customerId, loyaltyPoints, loyaltyApplied, totalCount);
         log.info("Successfully placed order for customer with id {}", customerId);
         return model;
     }
+
+    @Transactional
+    protected void updateBookStockQuantity(final List<OrderCartPreviewItemModel> items) {
+        for (OrderCartPreviewItemModel item : items) {
+            Book book = bookService.getById(item.bookId());
+            int stockQuantity = book.getStockQuantity() - item.quantity();
+            checkAvailableQuantity(book, stockQuantity);
+            book.setStockQuantity(stockQuantity);
+            bookService.save(book);
+        }
+    }
+
+    @Transactional
+    public void checkAvailableQuantity(final Book book, final int quantity) {
+        if (book.getStockQuantity() < quantity) {
+            throw new RecordConflictException(String.format("Not enough stock for book with id %s ", book.getId()), ErrorCode.RECORD_CONFLICT);
+        }
+    }
+
+    @Transactional
+    protected void createOrder(
+            int totalCount, final BigDecimal totalPrice,
+            final UUID customerId, final boolean loyaltyApplied,
+            final List<OrderCartPreviewItemModel> items) {
+        CreateOrderModel createOrderModel = new CreateOrderModel();
+        createOrderModel.setTotalItems(totalCount);
+        createOrderModel.setTotalPrice(totalPrice);
+        createOrderModel.setCustomerId(customerId);
+        createOrderModel.setLoyaltyPointsApplied(loyaltyApplied);
+        Order order = orderService.create(createOrderModel);
+        for (OrderCartPreviewItemModel item : items) {
+            CreateOrderItemModel itemModel = new CreateOrderItemModel(
+                    order.getId(),
+                    item.bookId(),
+                    item.quantity(),
+                    item.unitPrice(),
+                    item.totalPrice(),
+                    OrderStatus.COMPLETED);
+            orderItemService.create(itemModel);
+        }
+    }
+
+    @Transactional
+    protected void updateCustomerLoyaltyPointsByPurchasedBooks(
+            final UUID customerId, final int currentPoints,
+            final boolean loyaltyApplied, int purchasedCount) {
+        int earnedPoints = loyaltyApplied ? purchasedCount - 1 : purchasedCount;
+        int updatedPoints = currentPoints + earnedPoints;
+        iamServiceClient.updateUserLoyaltyPoints(customerId, updatedPoints);
+    }
+
 
     private int calculateTotalItemCount(List<OrderCartPreviewItemModel> orderItems) {
         int totalQuantity = 0;
@@ -173,47 +225,6 @@ public class OrderCartProcessService {
 
     private BigDecimal calculateBooksPriceWithQuantity(final Book book, final int quantity) {
         return book.getBasePrice().multiply(BigDecimal.valueOf(quantity));
-    }
-
-    @Transactional
-    protected void updateBookStockQuantity(final List<OrderCartPreviewItemModel> items) {
-        for (OrderCartPreviewItemModel item : items) {
-            Book book = bookService.getById(item.bookId());
-            int stockQuantity = book.getStockQuantity() - item.quantity();
-            checkAvailableQuantity(book, stockQuantity);
-            book.setStockQuantity(stockQuantity);
-            bookService.save(book);
-        }
-    }
-
-    @Transactional
-    public void checkAvailableQuantity(final Book book, final int quantity) {
-        if (book.getStockQuantity() < quantity) {
-            throw new RecordConflictException(String.format("Not enough stock for book with id %s ", book.getId()), ErrorCode.RECORD_CONFLICT);
-        }
-    }
-
-    @Transactional
-    protected void createOrder(
-            int totalCount, final BigDecimal totalPrice,
-            final UUID customerId, final boolean loyaltyApplied,
-            final List<OrderCartPreviewItemModel> items) {
-        CreateOrderModel createOrderModel = new CreateOrderModel();
-        createOrderModel.setTotalItems(totalCount);
-        createOrderModel.setTotalPrice(totalPrice);
-        createOrderModel.setCustomerId(customerId);
-        createOrderModel.setLoyaltyPointsApplied(loyaltyApplied);
-        Order order = orderService.create(createOrderModel);
-        for (OrderCartPreviewItemModel item : items) {
-            CreateOrderItemModel itemModel = new CreateOrderItemModel(
-                    order.getId(),
-                    item.bookId(),
-                    item.quantity(),
-                    item.unitPrice(),
-                    item.totalPrice(),
-                    OrderStatus.COMPLETED);
-            orderItemService.create(itemModel);
-        }
     }
 
 }
