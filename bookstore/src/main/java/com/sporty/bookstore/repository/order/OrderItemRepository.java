@@ -17,5 +17,5 @@ import java.util.UUID;
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     @Query("select o from OrderItem o where o.order.id =:orderId and o.status = 'ACTIVE'")
-    Page<OrderItem> findAllForFeedbackTarget(@Param("orderId") UUID orderId, Pageable pageable);    
+    Page<OrderItem> findAllForOrderId(@Param("orderId") UUID orderId, Pageable pageable);    
 } 

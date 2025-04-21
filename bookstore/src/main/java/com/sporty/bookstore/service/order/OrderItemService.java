@@ -75,7 +75,7 @@ public class OrderItemService {
         log.info("Getting order items for order with id - {}", orderId);
         validator.validate(model);
         Pageable pageable = PageRequest.of(model.page(), model.size());
-        Page<OrderItem> result = repository.findAllForFeedbackTarget(orderId, pageable);
+        Page<OrderItem> result = repository.findAllForOrderId(orderId, pageable);
         long totalCount = result.getTotalElements();
         log.info("Successfully retrieved order items for order with id result - {}", result);
         return new PageModel<>(result.getContent(), totalCount);
