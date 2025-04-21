@@ -14,6 +14,7 @@ import com.sporty.bookstore.domain.model.order.cart.OrderCartPreviewModel;
 import com.sporty.bookstore.domain.model.order.item.CreateOrderItemModel;
 import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
 import com.sporty.bookstore.domain.model.order.place.OrderPlaceModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlacedModel;
 import com.sporty.bookstore.service.book.BookService;
 import com.sporty.bookstore.service.mapper.order.OrderPlacedItemModelMapper;
 import com.sporty.bookstore.service.validator.ModelValidator;

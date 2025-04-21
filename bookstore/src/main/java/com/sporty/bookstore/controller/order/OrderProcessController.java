@@ -20,7 +20,7 @@ import com.sporty.bookstore.domain.model.order.item.OrderItemModel;
 import com.sporty.bookstore.domain.model.order.place.OrderPlaceItemModel;
 import com.sporty.bookstore.domain.model.order.place.OrderPlaceModel;
 import com.sporty.bookstore.service.order.OrderCartProcessService;
-import com.sporty.bookstore.service.order.OrderPlacedModel;
+import com.sporty.bookstore.domain.model.order.place.OrderPlacedModel;
 import com.sporty.bookstore.service.validator.ModelValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

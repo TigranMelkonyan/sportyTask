@@ -45,9 +45,9 @@
 
 ### Default Book Types in DB
 
-    NEW_RELEASE [100]
-    REGULAR
-    OLD_EDITION
+    NEW_RELEASE (not discounted)
+    REGULAR     (if buy 3 and more discount 10%)
+    OLD_EDITION (default discount 10%, if buy 3 and more discount 5%)
 
 ### Application build/run description
 
@@ -103,6 +103,25 @@ cd bookstore && mvn spring-boot:run
       Flexible Book Type Mechanism: A flexible book type mechanism is implemented, allowing admin 
       to create and manage book types dynamically, making it easier to adapt to changing business requirements
       without requiring code changes. Also provided default 3 types of books as mentioned in requirements.
+
+## Further Implementations and Improvements
+
+      As the project evolves, several enhancements can be considered to improve performance, maintainability, 
+      and user experience:
+
+      Caching & Logging: Integrate caching mechanisms to reduce database load and improve response times. 
+      Enhance logging for better observability and debugging.
+
+      User & Order History Tracking: Preserve more detailed historical data about users and their orders 
+      for analytics and auditing purposes.
+
+      PDF Export: Implement a system to allow users to download their purchase history in PDF format.
+
+      Scheduled Notifications: Add scheduled jobs to send automated notifications — such as order status 
+      updates or stock alerts — to both users and administrators.
+
+      Modular Architecture: As the application scales, split the bookstore microservice into smaller,
+      focused modules such as inventory, orders, and purchases, each with a clear responsibility.
 
 ### Iam service swagger
 
