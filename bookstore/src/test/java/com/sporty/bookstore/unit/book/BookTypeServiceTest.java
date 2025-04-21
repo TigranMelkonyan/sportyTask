@@ -57,10 +57,9 @@ class BookTypeServiceTest {
         bookType.setName("Test Book Type");
         bookType.setPriceMultiplier(0.8);
         bookType.setBundleDiscount(0.9);
-        bookType.setEligibleForDiscount(true);
 
-        createModel = new CreateBookTypeModel("Test Book Type", 0.8, 0.9, true);
-        updateModel = new UpdateBookTypeModel("Updated Book Type", 0.85, 0.95, true);
+        createModel = new CreateBookTypeModel("Test Book Type", 0.8, 0.9);
+        updateModel = new UpdateBookTypeModel("Updated Book Type", 0.85, 0.95);
     }
 
     @Test

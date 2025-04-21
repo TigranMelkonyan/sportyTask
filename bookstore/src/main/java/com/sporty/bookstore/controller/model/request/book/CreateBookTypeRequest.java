@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Created by Tigran Melkonyan
@@ -19,8 +18,6 @@ public record CreateBookTypeRequest(
         double pricePercentage,
         @DecimalMin("0.0") @DecimalMax("100.0")
         @Schema(description = "Bundle discount as percentage (e.g., 95 = 5% discount)")
-        double bundleDiscountPercentage,
-        @NotNull(message = "required")
-        boolean eligibleForDiscount
+        double bundleDiscountPercentage
 ) {
 }

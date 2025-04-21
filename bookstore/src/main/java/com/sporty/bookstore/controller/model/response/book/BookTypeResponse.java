@@ -11,7 +11,5 @@ public record BookTypeResponse(
         UUID id,
         String name,
         double pricePercentage,
-        double bundleDiscountPercentage,
-        boolean eligibleForDiscount
-) {
+        double bundleDiscountPercentage) {
 }
