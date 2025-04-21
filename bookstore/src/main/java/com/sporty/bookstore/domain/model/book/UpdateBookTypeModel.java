@@ -2,7 +2,6 @@ package com.sporty.bookstore.domain.model.book;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Created by Tigran Melkonyan
@@ -12,6 +11,5 @@ import jakarta.validation.constraints.NotNull;
 public record UpdateBookTypeModel(
         @NotBlank(message = "required") String name,
         @Min(value = 0, message = "priceMultiplier must not be negative") double priceMultiplier,
-        @Min(value = 0, message = "priceMultiplier must not be negative") double bundleDiscount,
-        @NotNull(message = "required") boolean eligibleForDiscount) {
+        @Min(value = 0, message = "priceMultiplier must not be negative") double bundleDiscount) {
 }

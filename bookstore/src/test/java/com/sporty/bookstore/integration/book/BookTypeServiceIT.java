@@ -16,11 +16,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by Tigran Melkonyan
@@ -39,7 +37,7 @@ class BookTypeServiceIT {
 
     @Test
     void create_WhenValidModel_ShouldCreateBookType() {
-        CreateBookTypeModel model = new CreateBookTypeModel("Test Book Type", 0.8, 0.9, true);
+        CreateBookTypeModel model = new CreateBookTypeModel("Test Book Type", 0.8, 0.9);
 
         BookType result = bookTypeService.create(UUID.randomUUID(), model);
 
@@ -48,7 +46,6 @@ class BookTypeServiceIT {
         assertEquals("Test Book Type", result.getName());
         assertEquals(0.8, result.getPriceMultiplier());
         assertEquals(0.9, result.getBundleDiscount());
-        assertTrue(result.isEligibleForDiscount());
 
         BookType saved = bookTypeRepository.findById(result.getId()).orElseThrow();
         assertEquals(result, saved);
@@ -56,16 +53,16 @@ class BookTypeServiceIT {
 
     @Test
     void create_WhenNameExists_ShouldThrowException() {
-        CreateBookTypeModel model = new CreateBookTypeModel("Test Book Type", 0.8, 0.9, true);
+        CreateBookTypeModel model = new CreateBookTypeModel("Test Book Type", 0.8, 0.9);
         bookTypeService.create(UUID.randomUUID(), model);
 
-        assertThrows(RecordConflictException.class, () -> 
-            bookTypeService.create(UUID.randomUUID(), model));
+        assertThrows(RecordConflictException.class, () ->
+                bookTypeService.create(UUID.randomUUID(), model));
     }
 
     @Test
     void getById_WhenBookTypeExists_ShouldReturnBookType() {
-        CreateBookTypeModel model = new CreateBookTypeModel("Test Book Type", 0.8, 0.9, true);
+        CreateBookTypeModel model = new CreateBookTypeModel("Test Book Type", 0.8, 0.9);
         BookType created = bookTypeService.create(UUID.randomUUID(), model);
 
         BookType result = bookTypeService.getById(created.getId());
@@ -79,16 +76,16 @@ class BookTypeServiceIT {
     void getById_WhenBookTypeNotExists_ShouldThrowException() {
         UUID nonExistentId = UUID.randomUUID();
 
-        assertThrows(RecordNotFoundException.class, () -> 
-            bookTypeService.getById(nonExistentId));
+        assertThrows(RecordNotFoundException.class, () ->
+                bookTypeService.getById(nonExistentId));
     }
 
     @Test
     void update_WhenValidModel_ShouldUpdateBookType() {
-        CreateBookTypeModel createModel = new CreateBookTypeModel("Test Book Type", 0.8, 0.9, true);
+        CreateBookTypeModel createModel = new CreateBookTypeModel("Test Book Type", 0.8, 0.9);
         BookType created = bookTypeService.create(UUID.randomUUID(), createModel);
-        
-        UpdateBookTypeModel updateModel = new UpdateBookTypeModel("Updated Book Type", 0.85, 0.95, false);
+
+        UpdateBookTypeModel updateModel = new UpdateBookTypeModel("Updated Book Type", 0.85, 0.95);
 
         BookType result = bookTypeService.update(created.getId(), updateModel);
 
@@ -97,7 +94,6 @@ class BookTypeServiceIT {
         assertEquals("Updated Book Type", result.getName());
         assertEquals(0.85, result.getPriceMultiplier());
         assertEquals(0.95, result.getBundleDiscount());
-        assertFalse(result.isEligibleForDiscount());
 
         BookType saved = bookTypeRepository.findById(result.getId()).orElseThrow();
         assertEquals(result, saved);
@@ -105,23 +101,23 @@ class BookTypeServiceIT {
 
     @Test
     void update_WhenNameExists_ShouldThrowException() {
-        CreateBookTypeModel model1 = new CreateBookTypeModel("Test Book Type 1", 0.8, 0.9, true);
-        CreateBookTypeModel model2 = new CreateBookTypeModel("Test Book Type 2", 0.8, 0.9, true);
-        
+        CreateBookTypeModel model1 = new CreateBookTypeModel("Test Book Type 1", 0.8, 0.9);
+        CreateBookTypeModel model2 = new CreateBookTypeModel("Test Book Type 2", 0.8, 0.9);
+
         BookType created1 = bookTypeService.create(UUID.randomUUID(), model1);
         bookTypeService.create(UUID.randomUUID(), model2);
 
-        UpdateBookTypeModel updateModel = new UpdateBookTypeModel("Test Book Type 2", 0.85, 0.95, true);
+        UpdateBookTypeModel updateModel = new UpdateBookTypeModel("Test Book Type 2", 0.85, 0.95);
 
-        assertThrows(RecordConflictException.class, () -> 
-            bookTypeService.update(created1.getId(), updateModel));
+        assertThrows(RecordConflictException.class, () ->
+                bookTypeService.update(created1.getId(), updateModel));
     }
 
     @Test
     void getAll_ShouldReturnAllBookTypes() {
-        CreateBookTypeModel model1 = new CreateBookTypeModel("Test Book Type 1", 0.8, 0.9, true);
-        CreateBookTypeModel model2 = new CreateBookTypeModel("Test Book Type 2", 0.8, 0.9, true);
-        
+        CreateBookTypeModel model1 = new CreateBookTypeModel("Test Book Type 1", 0.8, 0.9);
+        CreateBookTypeModel model2 = new CreateBookTypeModel("Test Book Type 2", 0.8, 0.9);
+
         bookTypeService.create(UUID.randomUUID(), model1);
         bookTypeService.create(UUID.randomUUID(), model2);
 

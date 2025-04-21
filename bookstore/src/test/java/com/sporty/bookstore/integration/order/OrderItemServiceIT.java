@@ -57,7 +57,6 @@ public class OrderItemServiceIT {
     void setUp() {
         BookType bookType = new BookType();
         bookType.setName("Test Type");
-        bookType.setEligibleForDiscount(true);
         bookType.setPriceMultiplier(1.0);
         bookType.setBundleDiscount(0.0);
         bookType = bookTypeRepository.save(bookType);

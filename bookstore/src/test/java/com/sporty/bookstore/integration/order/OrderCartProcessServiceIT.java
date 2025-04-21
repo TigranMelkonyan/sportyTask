@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,14 +65,12 @@ public class OrderCartProcessServiceIT {
         // Create book types
         BookType regularType = new BookType();
         regularType.setName("RegularType");
-        regularType.setEligibleForDiscount(true);
         regularType.setPriceMultiplier(1.0);
         regularType.setBundleDiscount(0.9);
         regularType = bookTypeRepository.save(regularType);
 
         BookType newRelease = new BookType();
-        newRelease.setName("NEW_RELEARE");
-        newRelease.setEligibleForDiscount(false);
+        newRelease.setName("NEW_REL");
         newRelease.setPriceMultiplier(1.0);
         newRelease.setBundleDiscount(1.0);
         newRelease = bookTypeRepository.save(newRelease);
@@ -102,7 +99,7 @@ public class OrderCartProcessServiceIT {
     }
 
     @Test
-    void calculateCartPreview_WithNewReleaseEligibleBook_ShouldNotApplyDiscount() {
+    void calculateCartPreview_WithNewReleaseEligibleBook_ShouldApply_Only_Loyalty() {
         List<OrderCartPreviewModel> items = List.of(
                 new OrderCartPreviewModel(bookId2, 5)
         );
@@ -111,8 +108,8 @@ public class OrderCartProcessServiceIT {
 
         assertNotNull(preview);
         assertEquals(1, preview.items().size());
-        assertEquals(0, BigDecimal.valueOf(50.0).compareTo(preview.totalPrice()));
-        assertFalse(preview.items().get(0).oneForFree());
+        assertEquals(0, BigDecimal.valueOf(40.0).compareTo(preview.totalPrice()));
+        assertTrue(preview.items().get(0).oneForFree());
     }
 
     @Test

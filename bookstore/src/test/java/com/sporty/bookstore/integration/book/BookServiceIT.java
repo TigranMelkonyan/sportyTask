@@ -48,8 +48,7 @@ class BookServiceIT {
     @BeforeEach
     void setUp() {
         CreateBookTypeModel bookTypeModel = new CreateBookTypeModel(
-                "Test Book Type", 0.8, 0.9,
-                true);
+                "Test Book Type", 0.8, 0.9);
         bookType = bookTypeService.create(UUID.randomUUID(), bookTypeModel);
         bookTypeId = bookType.getId();
     }

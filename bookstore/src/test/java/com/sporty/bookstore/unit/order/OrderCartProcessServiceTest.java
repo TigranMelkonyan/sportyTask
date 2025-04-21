@@ -81,12 +81,10 @@ class OrderCartProcessServiceTest {
         bookId2 = UUID.randomUUID();
 
         bookType1 = new BookType();
-        bookType1.setEligibleForDiscount(true);
         bookType1.setPriceMultiplier(0.8);
         bookType1.setBundleDiscount(0.9);
 
         bookType2 = new BookType();
-        bookType2.setEligibleForDiscount(false);
         bookType2.setPriceMultiplier(1.0);
         bookType2.setBundleDiscount(1.0);
 
@@ -131,7 +129,7 @@ class OrderCartProcessServiceTest {
 
         OrderCartPreviewItemModel secondItem = result.items().get(1);
         assertEquals(bookId2, secondItem.bookId());
-        assertEquals(BigDecimal.ZERO, secondItem.totalPriceAfterDiscount());
+        assertEquals(BigDecimal.ZERO, secondItem.discount());
         assertFalse(secondItem.oneForFree());
     }
 

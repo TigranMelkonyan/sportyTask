@@ -2,7 +2,6 @@ package com.sporty.bookstore.service.order;
 
 import com.sporty.bookstore.controller.resource.IamServiceClient;
 import com.sporty.bookstore.domain.entity.book.Book;
-import com.sporty.bookstore.domain.entity.book.BookType;
 import com.sporty.bookstore.domain.entity.order.Order;
 import com.sporty.bookstore.domain.entity.order.OrderStatus;
 import com.sporty.bookstore.domain.model.common.exception.ErrorCode;
@@ -64,11 +63,8 @@ public class OrderCartProcessService {
         OrderCartPreviewModel loyaltyItem = null;
         if (currentLoyaltyPoints >= acceptableLoyaltyPoints) {
             for (OrderCartPreviewModel item : items) {
-                Book book = bookService.getById(item.bookId());
-                if (isEligibleForDiscount(book)) {
-                    loyaltyItem = item;
-                    break;
-                }
+                loyaltyItem = item;
+                break;
             }
         }
         for (OrderCartPreviewModel item : items) {
@@ -76,7 +72,7 @@ public class OrderCartProcessService {
             int bookQuantity = item.quantity();
             checkAvailableQuantity(book, bookQuantity);
             BigDecimal itemsPriceAfterDiscount;
-            if (Objects.nonNull(loyaltyItem) && !loyaltyApplied && loyaltyItem.bookId().equals(item.bookId())) {
+            if (Objects.nonNull(loyaltyItem) && loyaltyItem.bookId().equals(item.bookId())) {
                 loyaltyApplied = true;
                 forFree = true;
             }
@@ -89,7 +85,9 @@ public class OrderCartProcessService {
             if (forFree) {
                 forFree = false;
             }
-
+            if (loyaltyApplied) {
+                loyaltyApplied = false;
+            }
         }
         log.info("Successfully calculated order preview for customer with id {}", customerId);
         //cart preview data can be saved in db for further perches checkout
@@ -207,11 +205,6 @@ public class OrderCartProcessService {
                 prices,
                 itemsPriceAfterDiscount,
                 forFree));
-    }
-
-    private boolean isEligibleForDiscount(final Book book) {
-        BookType type = book.getType();
-        return type.isEligibleForDiscount();
     }
 
     private BigDecimal calculateBooksPriceWithDiscount(final Book book, int quantity, final boolean loyaltyApplied) {
