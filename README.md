@@ -189,4 +189,3 @@ cd bookstore && mvn spring-boot:run
 
       Provides APIs for order preview and processing. Allows users to preview their cart, apply discounts, 
       and proceed with the order place. Accessible by both admin and user roles.
-
