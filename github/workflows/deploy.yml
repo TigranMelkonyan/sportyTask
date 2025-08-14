@@ -1,36 +1,55 @@
-name: Deploy to EC2
+name: Deploy to AWS EC2
 
 on:
-  workflow_dispatch: # manual trigger
+  workflow_dispatch:
+
+env:
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ${{ secrets.EC2_USER }}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+  DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.1
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
-      - name: Create dynamic .env file on EC2
+      - name: Install SSH key
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cat > .env <<EOL
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          SCHEMA_NAME=sporty_db
-          EOL
-          EOF
+          mkdir -p ~/.ssh
+          echo "${{ env.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Pull and deploy Docker containers
+      - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/bookstore:latest
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/iam:latest
-          docker-compose -f /home/${{ secrets.EC2_USER }}/docker-compose.yml --env-file /home/${{ secrets.EC2_USER }}/.env up -d
+          ssh -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
+          
+          # Log in to Docker Hub
+          echo "${DOCKER_HUB_ACCESS_TOKEN}" | docker login --username "${DOCKER_HUB_USERNAME}" --password-stdin
+          
+          # Pull latest images
+          docker pull ${DOCKER_HUB_USERNAME}/bookstore:latest
+          docker pull ${DOCKER_HUB_USERNAME}/iam:latest
+          
+          # Stop and remove old containers if exist
+          docker rm -f bookstore || true
+          docker rm -f iam || true
+          
+          # Run containers
+          docker run -d \
+            --name bookstore \
+            --env-file /home/ubuntu/sportyTask/.env \
+            -p 8080:8080 \
+            ${DOCKER_HUB_USERNAME}/bookstore:latest
+
+          docker run -d \
+            --name iam \
+            --env-file /home/ubuntu/sportyTask/.env \
+            -p 8081:8081 \
+            ${DOCKER_HUB_USERNAME}/iam:latest
+          
           EOF
