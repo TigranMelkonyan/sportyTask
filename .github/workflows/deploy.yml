@@ -1,3 +1,19 @@
+name: Deploy to AWS EC2
+
+on:
+  workflow_dispatch:
+
+env:
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ${{ secrets.EC2_USER }}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+  DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  RDS_HOST: ${{ secrets.RDS_HOST }}
+  RDS_PORT: ${{ secrets.RDS_PORT }}
+  RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
+  RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,23 +39,28 @@ jobs:
           docker pull ${DOCKER_HUB_USERNAME}/bookstore:latest
           docker pull ${DOCKER_HUB_USERNAME}/iam:latest
 
-          # Start MySQL via Docker Compose
-          docker-compose -f /home/ubuntu/sportyTask/local_stack/docker-compose.yml up -d
-
-          # Stop old microservices if exist
+          # Stop and remove old containers
           docker rm -f bookstore || true
           docker rm -f iam || true
 
-          # Run microservices
+          # Create databases in RDS if they do not exist
+          mysql -h ${RDS_HOST} -P ${RDS_PORT} -u ${RDS_USERNAME} -p${RDS_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS sporty_db;"
+          mysql -h ${RDS_HOST} -P ${RDS_PORT} -u ${RDS_USERNAME} -p${RDS_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS sporty_iam;"
+
+          # Run containers
           docker run -d \
             --name bookstore \
-            --env-file /home/ubuntu/sportyTask/bookstore/.env \
+            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:${RDS_PORT}/sporty_db" \
+            -e SPRING_DATASOURCE_USERNAME="${RDS_USERNAME}" \
+            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \
             -p 8080:8080 \
             ${DOCKER_HUB_USERNAME}/bookstore:latest
 
           docker run -d \
             --name iam \
-            --env-file /home/ubuntu/sportyTask/iam/.env \
+            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:${RDS_PORT}/sporty_iam" \
+            -e SPRING_DATASOURCE_USERNAME="${RDS_USERNAME}" \
+            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \
             -p 8081:8081 \
             ${DOCKER_HUB_USERNAME}/iam:latest
 
