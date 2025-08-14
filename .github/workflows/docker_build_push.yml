@@ -47,9 +47,10 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest ./{{ matrix.service }}
+          docker build -t ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest ./${{ matrix.service }}
           docker tag ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:${{ github.sha }}
-
+      
+      
       - name: Push Docker image
         run: |
           docker push ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
