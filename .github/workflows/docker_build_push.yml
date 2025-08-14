@@ -18,26 +18,30 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # Build bookstore JAR
       - name: Build bookstore JAR
         working-directory: ./bookstore
         run: mvn clean package -DskipTests
 
+      # Build iam JAR
       - name: Build iam JAR
         working-directory: ./iam
         run: mvn clean package -DskipTests
 
+      # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ env.DOCKER_HUB_ACCESS_TOKEN }}
 
+      # Build Docker images
       - name: Build bookstore Docker image
         run: docker build -t ${{ env.DOCKER_HUB_USERNAME }}/bookstore:latest ./bookstore
 
