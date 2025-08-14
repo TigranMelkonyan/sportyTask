@@ -1,0 +1,36 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch: # manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Create dynamic .env file on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cat > .env <<EOL
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SCHEMA_NAME=sporty_db
+          EOL
+          EOF
+
+      - name: Pull and deploy Docker containers
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/bookstore:latest
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/iam:latest
+          docker-compose -f /home/${{ secrets.EC2_USER }}/docker-compose.yml --env-file /home/${{ secrets.EC2_USER }}/.env up -d
+          EOF
