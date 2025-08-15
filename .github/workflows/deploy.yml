@@ -1,52 +1,42 @@
-name: Build and Push Docker Images
+name: Deploy to EC2
 
 on:
-  push:
-    branches:
-      - master
-  workflow_dispatch:
-
-env:
-  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-  DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+  workflow_run:
+    workflows: ["Docker Build and Push"]
+    types:
+      - completed
 
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [bookstore, iam]  # build both services in parallel
 
     steps:
-      # 1️⃣ Checkout the repo
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # 2️⃣ Set up Java for Maven
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      - name: SSH to EC2 and Deploy
+        uses: appleboy/ssh-action@v0.1.7
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # Pull latest images
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/bookstore:latest
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/iam:latest
 
-      # 3️⃣ Build the Maven project for this service
-      - name: Build Maven project
-        working-directory: ${{ matrix.service }}
-        run: mvn clean package -DskipTests
+            # Stop and remove old containers
+            docker stop bookstore || true
+            docker rm bookstore || true
+            docker stop iam || true
+            docker rm iam || true
 
-      # 4️⃣ Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ env.DOCKER_HUB_USERNAME }}
-          password: ${{ env.DOCKER_HUB_ACCESS_TOKEN }}
+            # Run new containers connected to RDS
+            docker run -d --name bookstore -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_HOST }}:3306/sporty_db \
+              -e SPRING_DATASOURCE_USERNAME=${{ secrets.RDS_USER }} \
+              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/bookstore:latest
 
-      # 5️⃣ Build Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest ./
-        working-directory: ${{ matrix.service }}
-
-      # 6️⃣ Push Docker image to Docker Hub
-      - name: Push Docker image
-        run: docker push ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
+            docker run -d --name iam -p 8081:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_HOST }}:3306/sporty_iam \
+              -e SPRING_DATASOURCE_USERNAME=${{ secrets.RDS_USER }} \
+              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/iam:latest
