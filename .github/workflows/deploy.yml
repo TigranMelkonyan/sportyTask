@@ -38,31 +38,11 @@ jobs:
 
       - name: Pull Docker images and run containers
         run: |
-          ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
-            docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_ACCESS_TOKEN
-
-            # Stop and remove old containers if exist
-            docker rm -f iam || true
-            docker rm -f bookstore || true
-
-            # Pull latest images
-            docker pull $DOCKER_HUB_USERNAME/iam:latest
-            docker pull $DOCKER_HUB_USERNAME/bookstore:latest
-
-            # Run containers
-            docker run -d \
-              --name iam \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_iam \
-              -e SPRING_DATASOURCE_USERNAME=$RDS_USER \
-              -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD \
-              -p 8081:8080 \
-              $DOCKER_HUB_USERNAME/iam:latest
-
-            docker run -d \
-              --name bookstore \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_db \
-              -e SPRING_DATASOURCE_USERNAME=$RDS_USER \
-              -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD \
-              -p 8080:8080 \
-              $DOCKER_HUB_USERNAME/bookstore:latest
-          EOF
+          ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
+          "echo $DOCKER_HUB_ACCESS_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin && \
+           docker rm -f iam || true && \
+           docker rm -f bookstore || true && \
+           docker pull $DOCKER_HUB_USERNAME/iam:latest && \
+           docker pull $DOCKER_HUB_USERNAME/bookstore:latest && \
+           docker run -d --name iam -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_iam -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD -p 8081:8080 $DOCKER_HUB_USERNAME/iam:latest && \
+           docker run -d --name bookstore -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_db -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD -p 8080:8080 $DOCKER_HUB_USERNAME/bookstore:latest"
