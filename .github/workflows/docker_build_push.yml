@@ -1,4 +1,4 @@
-name: Docker Build and Push
+name: Build and Push Docker Images
 
 on:
   push:
@@ -15,21 +15,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # 1. Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Set up Java 17
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. Build bookstore JAR
+      - name: Build Bookstore JAR
+        run: |
+          cd bookstore
+          ./mvnw clean package -DskipTests
+
+      # 4. Build IAM JAR
+      - name: Build IAM JAR
+        run: |
+          cd iam
+          ./mvnw clean package -DskipTests
+
+      # 5. Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ env.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build and Push Bookstore
+      # 6. Build and push Bookstore Docker image
+      - name: Build & Push Bookstore Docker Image
         run: |
           docker build -t ${{ env.DOCKER_HUB_USERNAME }}/bookstore:latest ./bookstore
           docker push ${{ env.DOCKER_HUB_USERNAME }}/bookstore:latest
 
-      - name: Build and Push IAM
+      # 7. Build and push IAM Docker image
+      - name: Build & Push IAM Docker Image
         run: |
           docker build -t ${{ env.DOCKER_HUB_USERNAME }}/iam:latest ./iam
           docker push ${{ env.DOCKER_HUB_USERNAME }}/iam:latest
