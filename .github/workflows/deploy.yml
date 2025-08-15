@@ -14,7 +14,7 @@ env:
   DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
   RDS_HOST: ${{ secrets.RDS_HOST }}
   RDS_USER: ${{ secrets.RDS_USER }}
-  RDS_PASS: ${{ secrets.RDS_PASSWORD }}
+  RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
 
 jobs:
   deploy:
@@ -24,45 +24,45 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Install SSH client
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
+
       - name: Setup SSH key
-        uses: webfactory/ssh-agent@v0.8.1
-        with:
-          ssh-private-key: ${{ secrets.EC2_KEY }}
-
-      - name: SSH and Deploy Containers
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          mkdir -p ~/.ssh
+          echo "${EC2_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-            # Login to Docker Hub
+      - name: Test SSH connection
+        run: ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "echo Connected successfully!"
+
+      - name: Pull Docker images and run containers
+        run: |
+          ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
             docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_ACCESS_TOKEN
 
-            # Pull latest images
-            docker pull $DOCKER_HUB_USERNAME/bookstore:latest
-            docker pull $DOCKER_HUB_USERNAME/iam:latest
-
             # Stop and remove old containers if exist
-            docker rm -f bookstore || true
             docker rm -f iam || true
+            docker rm -f bookstore || true
 
-            # Run Bookstore container
-            docker run -d \
-              --name bookstore \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_db \
-              -e SPRING_DATASOURCE_USERNAME=$RDS_USER \
-              -e SPRING_DATASOURCE_PASSWORD=RDS_PASSWORD \
-              -p 8080:8080 \
-              $DOCKER_HUB_USERNAME/bookstore:latest
+            # Pull latest images
+            docker pull $DOCKER_HUB_USERNAME/iam:latest
+            docker pull $DOCKER_HUB_USERNAME/bookstore:latest
 
-            # Run IAM container
+            # Run containers
             docker run -d \
               --name iam \
               -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_iam \
               -e SPRING_DATASOURCE_USERNAME=$RDS_USER \
-              -e SPRING_DATASOURCE_PASSWORD=RDS_PASSWORD \
+              -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD \
               -p 8081:8080 \
               $DOCKER_HUB_USERNAME/iam:latest
 
-            # Show running containers
-            docker ps -a
-
+            docker run -d \
+              --name bookstore \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_db \
+              -e SPRING_DATASOURCE_USERNAME=$RDS_USER \
+              -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD \
+              -p 8080:8080 \
+              $DOCKER_HUB_USERNAME/bookstore:latest
           EOF
