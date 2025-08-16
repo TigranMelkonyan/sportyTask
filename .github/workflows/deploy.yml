@@ -44,5 +44,5 @@ jobs:
            docker rm -f bookstore || true && \
            docker pull $DOCKER_HUB_USERNAME/iam:latest && \
            docker pull $DOCKER_HUB_USERNAME/bookstore:latest && \
-           docker run -d --name iam -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_iam -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD -p 8081:8080 $DOCKER_HUB_USERNAME/iam:latest && \
+           docker run -d --name iam -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_iam -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD -p 8081:8081 $DOCKER_HUB_USERNAME/iam:latest && \
            docker run -d --name bookstore -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_db -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD -p 8080:8080 $DOCKER_HUB_USERNAME/bookstore:latest"
