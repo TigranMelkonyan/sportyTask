@@ -1,32 +1,59 @@
+name: Deploy Microservices
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  IAM_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/iam:latest
+  BOOKSTORE_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/bookstore:latest
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.RDS_PASSWORD }}
-          password: ${{ secrets.RDS_PASSWORD }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Pull and run IAM container
-        run: |
-          docker pull tiko1996/iam:latest
-          docker stop iam || true
-          docker rm iam || true
-          docker run -d -p 8081:8081 \
-            --name iam \
-            -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
-            tiko1996/iam:latest
+      - name: SSH to EC2 and deploy IAM container
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            docker pull $IAM_IMAGE
+            docker stop iam || true
+            docker rm iam || true
+            docker run -d -p 8081:8081 \
+              --name iam \
+              -e DB_USERNAME=${{ secrets.RDS_USER }} \
+              -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+              -e DB_HOST=${{ secrets.RDS_HOST }} \
+              $IAM_IMAGE
 
-      - name: Pull and run Bookstore container
-        run: |
-          docker pull tiko1996/bookstore:latest
-          docker stop bookstore || true
-          docker rm bookstore || true
-          docker run -d -p 8080:8080 \
-            --name bookstore \
-            -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
-            tiko1996/bookstore:latest
+      - name: SSH to EC2 and deploy Bookstore container
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            docker pull $BOOKSTORE_IMAGE
+            docker stop bookstore || true
+            docker rm bookstore || true
+            docker run -d -p 8080:8080 \
+              --name bookstore \
+              -e DB_USERNAME=${{ secrets.RDS_USER }} \
+              -e DB_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+              -e DB_HOST=${{ secrets.RDS_HOST }} \
+              $BOOKSTORE_IMAGE
