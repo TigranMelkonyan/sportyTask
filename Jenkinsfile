@@ -9,7 +9,7 @@ pipeline {
         RDS_HOST = credentials('rds-host')
         RDS_USER = credentials('rds-user')
         RDS_PASSWORD = credentials('rds-password')
-    }
+    } 
 
     stages {
 
