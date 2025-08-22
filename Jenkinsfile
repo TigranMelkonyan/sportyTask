@@ -2,17 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_USERNAME = credentials('docker-hub-username')
-        DOCKER_HUB_ACCESS_TOKEN = credentials('docker-hub-token')
-        EC2_HOST = credentials('ec2-host')   
-        EC2_USER = credentials('ec2-user')
-        RDS_HOST = credentials('rds-host')
-        RDS_USER = credentials('rds-user')
-        RDS_PASSWORD = credentials('rds-password')
+        DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
+        EC2_HOST = "${env.EC2_HOST}"   
+        EC2_USER = "${env.EC2_USER}"
+        RDS_HOST = "${env.RDS_HOST}"
+        RDS_USER = "${env.RDS_USER}"
+        RDS_PASSWORD = "${env.RDS_PASSWORD}"
     } 
 
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'jenkins-setup', url: 'git@github.com:TigranMelkonyan/sportyTask.git'
@@ -22,9 +20,12 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 sh """
-                echo $DOCKER_HUB_ACCESS_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                docker build -t $DOCKER_HUB_USERNAME/bookstore:latest ./bookstore
-                docker build -t $DOCKER_HUB_USERNAME/iam:latest ./iam
+                # Login to Docker Hub using the credential helper
+                echo $DOCKER_HUB_CREDS_PSW | docker login -u $DOCKER_HUB_CREDS_USR --password-stdin
+                
+                # Build images
+                docker build -t $DOCKER_HUB_CREDS_USR/bookstore:latest ./bookstore
+                docker build -t $DOCKER_HUB_CREDS_USR/iam:latest ./iam
                 """
             }
         }
@@ -32,8 +33,8 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 sh """
-                docker push $DOCKER_HUB_USERNAME/bookstore:latest
-                docker push $DOCKER_HUB_USERNAME/iam:latest
+                docker push $DOCKER_HUB_CREDS_USR/bookstore:latest
+                docker push $DOCKER_HUB_CREDS_USR/iam:latest
                 """
             }
         }
@@ -42,15 +43,32 @@ pipeline {
             steps {
                 sshagent(['aws-ec2-key']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST '
-                        docker pull $DOCKER_HUB_USERNAME/bookstore:latest &&
-                        docker pull $DOCKER_HUB_USERNAME/iam:latest &&
-                        docker stop bookstore || true &&
-                        docker rm bookstore || true &&
-                        docker run -d --name bookstore -p 8080:8080 -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_db -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD $DOCKER_HUB_USERNAME/bookstore:latest &&
-                        docker stop iam || true &&
-                        docker rm iam || true &&
-                        docker run -d --name iam -p 8081:8081 -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_HOST:3306/sporty_iam -e SPRING_DATASOURCE_USERNAME=$RDS_USER -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD $DOCKER_HUB_USERNAME/iam:latest
+                    ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
+                        # Login to Docker Hub on EC2
+                        echo "${DOCKER_HUB_CREDS_PSW}" | docker login -u "${DOCKER_HUB_CREDS_USR}" --password-stdin
+                        
+                        # Pull the latest images
+                        docker pull $DOCKER_HUB_CREDS_USR/bookstore:latest
+                        docker pull $DOCKER_HUB_CREDS_USR/iam:latest
+                        
+                        # Stop and remove existing containers
+                        docker stop bookstore || true
+                        docker rm bookstore || true
+                        docker stop iam || true
+                        docker rm iam || true
+                        
+                        # Run new containers
+                        docker run -d --name bookstore -p 8080:8080 \
+                            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:3306/sporty_db" \
+                            -e SPRING_DATASOURCE_USERNAME="${RDS_USER}" \
+                            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \
+                            $DOCKER_HUB_CREDS_USR/bookstore:latest
+                            
+                        docker run -d --name iam -p 8081:8081 \
+                            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:3306/sporty_iam" \
+                            -e SPRING_DATASOURCE_USERNAME="${RDS_USER}" \
+                            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \
+                            $DOCKER_HUB_CREDS_USR/iam:latest
                     '
                     """
                 }
