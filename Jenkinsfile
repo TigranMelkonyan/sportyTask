@@ -19,14 +19,17 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh """
-                # Login to Docker Hub using the credential helper
-                echo $DOCKER_HUB_CREDS_PSW | docker login -u $DOCKER_HUB_CREDS_USR --password-stdin
-                
-                # Build images
-                docker build -t $DOCKER_HUB_CREDS_USR/bookstore:latest ./bookstore
-                docker build -t $DOCKER_HUB_CREDS_USR/iam:latest ./iam
-                """
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-credentials',
+                    passwordVariable: 'DOCKER_PASSWORD',
+                    usernameVariable: 'DOCKER_USERNAME'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker build -t $DOCKER_USERNAME/bookstore:latest ./bookstore
+                        docker build -t $DOCKER_USERNAME/iam:latest ./iam
+                    '''
+                }
             }
         }
 
