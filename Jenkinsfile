@@ -8,14 +8,20 @@ pipeline {
         RDS_HOST = "${env.RDS_HOST}"
         RDS_USER = "${env.RDS_USER}"
         RDS_PASSWORD = "${env.RDS_PASSWORD}"
+        GITHUB_CREDS = credentials('github-credentials')
     } 
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'jenkins-setup', url: 'git@github.com:TigranMelkonyan/sportyTask.git'
-            }
-        }
+        stages {
+                stage('Checkout') {
+                    steps {
+                        git(
+                            branch: 'jenkins-setup', 
+                            url: 'https://github.com/TigranMelkonyan/sportyTask.git',
+                            credentialsId: 'github-cred'
+                        )
+                    }
+                }
 
         stage('Build Docker Images') {
             steps {
