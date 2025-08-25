@@ -8,42 +8,34 @@ pipeline {
         RDS_HOST = "${env.RDS_HOST}"
         RDS_USER = "${env.RDS_USER}"
         RDS_PASSWORD = "${env.RDS_PASSWORD}"
-        GITHUB_CREDS = credentials('github-credentials')
     } 
 
-    stages {
-        stages {
-                stage('Checkout') {
-                    steps {
-                        git(
-                            branch: 'jenkins-setup', 
-                            url: 'https://github.com/TigranMelkonyan/sportyTask.git',
-                            credentialsId: 'github-cred'
-                        )
-                    }
-                }
+    stages {       
+        stage('Checkout') {
+            steps {
+                git(
+                    branch: 'jenkins-setup', 
+                    url: 'https://github.com/TigranMelkonyan/sportyTask.git',
+                    credentialsId: 'github-cred'
+                )
+            }
+        }
 
         stage('Build Docker Images') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub-credentials',
-                    passwordVariable: 'DOCKER_PASSWORD',
-                    usernameVariable: 'DOCKER_USERNAME'
-                )]) {
-                    sh '''
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        docker build -t $DOCKER_USERNAME/bookstore:latest ./bookstore
-                        docker build -t $DOCKER_USERNAME/iam:latest ./iam
-                    '''
-                }
+                sh """
+                    echo "\$DOCKER_HUB_CREDS_PSW" | docker login -u "\$DOCKER_HUB_CREDS_USR" --password-stdin
+                    docker build -t \$DOCKER_HUB_CREDS_USR/bookstore:latest ./bookstore
+                    docker build -t \$DOCKER_HUB_CREDS_USR/iam:latest ./iam
+                """
             }
         }
 
         stage('Push Docker Images') {
             steps {
                 sh """
-                docker push $DOCKER_HUB_CREDS_USR/bookstore:latest
-                docker push $DOCKER_HUB_CREDS_USR/iam:latest
+                docker push \$DOCKER_HUB_CREDS_USR/bookstore:latest
+                docker push \$DOCKER_HUB_CREDS_USR/iam:latest
                 """
             }
         }
@@ -67,16 +59,16 @@ pipeline {
                         docker rm iam || true
                         
                         # Run new containers
-                        docker run -d --name bookstore -p 8080:8080 \
-                            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:3306/sporty_db" \
-                            -e SPRING_DATASOURCE_USERNAME="${RDS_USER}" \
-                            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \
+                        docker run -d --name bookstore -p 8080:8080 \\
+                            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:3306/sporty_db" \\
+                            -e SPRING_DATASOURCE_USERNAME="${RDS_USER}" \\
+                            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \\
                             $DOCKER_HUB_CREDS_USR/bookstore:latest
                             
-                        docker run -d --name iam -p 8081:8081 \
-                            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:3306/sporty_iam" \
-                            -e SPRING_DATASOURCE_USERNAME="${RDS_USER}" \
-                            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \
+                        docker run -d --name iam -p 8081:8081 \\
+                            -e SPRING_DATASOURCE_URL="jdbc:mysql://${RDS_HOST}:3306/sporty_iam" \\
+                            -e SPRING_DATASOURCE_USERNAME="${RDS_USER}" \\
+                            -e SPRING_DATASOURCE_PASSWORD="${RDS_PASSWORD}" \\
                             $DOCKER_HUB_CREDS_USR/iam:latest
                     '
                     """
