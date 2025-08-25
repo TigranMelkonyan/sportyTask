@@ -21,6 +21,17 @@ pipeline {
             }
         }
 
+        stage('Build with Maven') {
+            steps {
+                dir('./bookstore') {
+                    sh 'mvn clean package -DskipTests'
+                }
+                dir('./iam') {
+                    sh 'mvn clean package -DskipTests'
+                }
+            }
+        }
+        
         stage('Build Docker Images') {
             steps {
                 sh """
