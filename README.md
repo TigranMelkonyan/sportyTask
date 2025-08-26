@@ -188,4 +188,4 @@ cd bookstore && mvn spring-boot:run
 ### OrderProcessController Description
 
       Provides APIs for order preview and processing. Allows users to preview their cart, apply discounts, 
-      and proceed with the order place. Accessible by both admin and user roles. 
+      and proceed with the order place. Accessible by both admin and user roles.
